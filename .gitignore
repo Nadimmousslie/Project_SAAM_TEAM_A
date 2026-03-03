@@ -1,0 +1,14 @@
+# Ignorer l'environnement virtuel
+venv/
+
+# Ignorer les dossiers de cache Python
+__pycache__/
+*.pyc
+
+# Ignorer les données (fichiers bruts et nettoyés)
+data/
+*.csv
+*.xlsx
+
+# Ignorer les paramètres locaux VS Code
+.vscode/
