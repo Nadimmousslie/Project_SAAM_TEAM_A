@@ -14,8 +14,11 @@ pip install pandas numpy matplotlib scipy notebook cvxpy openpyxl
 # Pour MAC
 
 python3 -m venv venv
+
 source venv/bin/activate
+
 pip install --upgrade pip
+
 pip install pandas numpy matplotlib scipy notebook cvxpy openpyxl 
 
 # Débloquer l'activation de l'environnement viruel 
