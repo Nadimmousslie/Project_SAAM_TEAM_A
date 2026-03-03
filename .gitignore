@@ -7,7 +7,7 @@ __pycache__/
 
 # Ignorer les données (fichiers bruts et nettoyés)
 data/
-*.csv
+#*.csv
 *.xlsx
 
 # Ignorer les paramètres locaux VS Code
