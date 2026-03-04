@@ -27,3 +27,4 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
 # install pandas
 pip install pandas openpyxl
+# test push
