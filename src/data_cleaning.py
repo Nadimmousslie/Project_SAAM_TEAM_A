@@ -1,96 +1,120 @@
-### data_cleaning.py
-
+# src/data_cleaning.py
 from __future__ import annotations
 
 from typing import Dict
-import re
 import numpy as np
 import pandas as pd
 
 from .config import Config
 
+EPS_ZERO = 1e-12
 
-# =========================================================
-# Helpers
-# =========================================================
-def _ensure_time_sorted(df: pd.DataFrame) -> pd.DataFrame:
-    """Sort time columns (dates) if they are datetime-like."""
+
+# -------------------------------------------------
+# Helpers (format / alignment)
+# -------------------------------------------------
+def _ensure_datetime_sorted_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ensure time columns are datetime-like and sorted.
+    Works for Datastream exports where columns are dates.
+    """
     df2 = df.copy()
-    try:
-        # if columns are datetime already, this works
-        df2 = df2.sort_index(axis=1)
-    except Exception:
-        pass
+    cols_dt = pd.to_datetime(df2.columns, errors="coerce")
+    if cols_dt.notna().mean() > 0.8:
+        df2.columns = cols_dt
+        df2 = df2.loc[:, df2.columns.notna()].sort_index(axis=1)
     return df2
 
 
-def drop_firms_with_no_prices(ri: pd.DataFrame) -> pd.DataFrame:
+def _align_to_index(df: pd.DataFrame, ref_index: pd.Index) -> pd.DataFrame:
     """
-    Missing prices: Datastream couldn't match a firm => full row missing.
-    Rule: delete from all tables.
-    Here we only drop from RI; the alignment across tables is handled later.
+    Keep only rows whose index is present in ref_index (intersection).
+    This enforces the rule 'delete missing prices firm from all tables'.
     """
-    return ri.dropna(axis=0, how="all")
-
-
-def apply_low_price_rule(ri: pd.DataFrame, min_price: float) -> pd.DataFrame:
-    """
-    Low prices: treat RI < 0.5 as missing (NaN).
-    IMPORTANT: do NOT forward-fill prices (keep NaNs for investability rules in universe.py).
-    """
-    ri2 = ri.copy()
-    ri2 = ri2.apply(pd.to_numeric, errors="coerce")
-    ri2 = ri2.mask(ri2 < min_price)
-    return ri2
-
-
-def compute_returns_from_ri(ri_clean: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute simple monthly returns from RI.
-    Datastream format used here: rows=firms, columns=monthly dates.
-    """
-    ri_clean = _ensure_time_sorted(ri_clean)
-    rets = ri_clean.pct_change(axis=1)
-    return rets
-
-
-def ffill_annual_table(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Missing values between two available values (annual data):
-    use previous year number => forward-fill in time.
-    Safe for CO2 / Revenues. Not for prices.
-    """
-    df2 = df.copy()
-    df2 = df2.apply(pd.to_numeric, errors="coerce")
-    df2 = df2.dropna(axis=0, how="all")
-    df2 = _ensure_time_sorted(df2)
-    return df2.ffill(axis=1)
-
-
-def align_firms_to_reference(df: pd.DataFrame, ref_index: pd.Index) -> pd.DataFrame:
-    """Keep only firms present in ref_index."""
-    # Some tables may have same index type (MultiIndex with ISIN/NAME)
     common = df.index.intersection(ref_index)
     return df.loc[common]
 
 
-# =========================================================
-# Delisting rule (-100%)
-# =========================================================
-def detect_delisted_firms_from_index(index: pd.Index) -> pd.Index:
+# -------------------------------------------------
+# 1) Missing prices: full row missing -> drop firm
+# -------------------------------------------------
+def drop_firms_with_no_prices(ri_m: pd.DataFrame) -> pd.DataFrame:
     """
-    Heuristic: Datastream sometimes appends delisting info/date to the NAME.
-    We detect 'DEAD'/'DELIST' and also patterns like '(YYYY-MM-DD)' or 'YYYY-MM-DD'.
+    Missing prices:
+    If Datastream cannot match a firm, the entire row is missing.
+    Rule: delete the firm from all tables.
+
+    Here we apply it on RI_M and later align all other tables on the remaining firms.
     """
-    if not isinstance(index, pd.MultiIndex):
+    ri = ri_m.apply(pd.to_numeric, errors="coerce")
+    ri = ri.dropna(axis=0, how="all")
+    ri = _ensure_datetime_sorted_columns(ri)
+    return ri
+
+
+# -------------------------------------------------
+# 2) Low prices: RI < 0.5 treated as missing
+# -------------------------------------------------
+def apply_low_price_rule(ri_m: pd.DataFrame, min_price: float) -> pd.DataFrame:
+    """
+    Low prices:
+    Datastream RI can be very small (or 0 due to rounding), causing extreme returns.
+    Rule: treat RI < 0.5 as missing values (NaN).
+
+    IMPORTANT:
+    We do NOT forward-fill prices. Missing end-of-year investability is handled in universe.py.
+    """
+    ri = ri_m.copy()
+    ri = ri.apply(pd.to_numeric, errors="coerce")
+    ri = ri.mask(ri < min_price)
+    ri = _ensure_datetime_sorted_columns(ri)
+    return ri
+
+
+# -------------------------------------------------
+# 3) Annual missing values (middle): use previous year
+# -------------------------------------------------
+def forward_fill_annual(df_y: pd.DataFrame) -> pd.DataFrame:
+    """
+    Missing values between two available annual values:
+    suggested to use the previous year's value -> forward-fill across columns (time axis).
+
+    Applies to annual tables like MV_Y, REV_Y, CO2 Scope 1.
+    """
+    df = df_y.copy()
+    df = df.apply(pd.to_numeric, errors="coerce")
+    df = df.dropna(axis=0, how="all")
+    df = _ensure_datetime_sorted_columns(df)
+    return df.ffill(axis=1)
+
+
+# -------------------------------------------------
+# 4) Monthly returns + delisting (-100%)
+# -------------------------------------------------
+def compute_monthly_returns_from_ri(ri_m_clean: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute simple monthly returns from RI:
+        r_t = RI_t / RI_{t-1} - 1
+    """
+    ri = _ensure_datetime_sorted_columns(ri_m_clean)
+    rets = ri.pct_change(axis=1)
+    return rets
+
+
+def detect_delisted_firms(index: pd.Index) -> pd.Index:
+    """
+    Heuristic:
+    Datastream often appends delisting info/date to the firm name.
+    We detect 'DEAD'/'DELIST' and also patterns like 'YYYY-MM-DD' in NAME.
+    """
+    if not isinstance(index, pd.MultiIndex) or index.nlevels < 2:
         return pd.Index([])
 
     names = index.get_level_values(1).astype(str)
-
-    pat_words = names.str.contains(r"DEAD|DELIST", case=False, na=False)
-    pat_date = names.str.contains(r"\d{4}-\d{2}-\d{2}", case=False, na=False)
-
-    mask = pat_words | pat_date
+    mask = (
+        names.str.contains(r"DEAD|DELIST", case=False, na=False)
+        | names.str.contains(r"\d{4}-\d{2}-\d{2}", case=False, na=False)
+    )
     return index[mask]
 
 
@@ -99,18 +123,19 @@ def apply_delisting_minus_one(
     ri_before_low_price: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Missing values at the end of the sample often correspond to default/delisting.
-    Rule: price goes to 0 at delisting => realized return -100% at delisting time.
+    Missing values at end of sample often correspond to default/delisting.
+    Rule: price goes to 0 at delisting -> realized return = -100%.
 
-    Implementation (heuristic):
-    - detect delisted firms from index name patterns
-    - for each delisted firm:
-        * find last valid RI observation in the original RI series (before low-price masking)
-        * set return = -1.0 on the next month (if it exists)
-        * set returns after that to NaN
+    Implementation:
+    - detect delisted firms from NAME patterns
+    - find last valid RI in the original RI series (before low-price masking)
+    - set return = -1.0 on the next month (if it exists)
+    - set returns after that to NaN
     """
     out = returns.copy()
-    delisted = detect_delisted_firms_from_index(out.index)
+    delisted = detect_delisted_firms(out.index)
+
+    cols = list(out.columns)
 
     for firm in delisted:
         if firm not in ri_before_low_price.index:
@@ -120,11 +145,7 @@ def apply_delisting_minus_one(
         last_valid = prices.last_valid_index()
         if last_valid is None:
             continue
-
-        # returns columns are the same time axis as RI columns
-        cols = list(out.columns)
         if last_valid not in out.columns:
-            # if last_valid is not in returns columns, skip
             continue
 
         pos = cols.index(last_valid)
@@ -132,67 +153,85 @@ def apply_delisting_minus_one(
             delist_month = cols[pos + 1]
             out.loc[firm, delist_month] = -1.0
 
-            # After delisting month, set to NaN
             if pos + 2 < len(cols):
                 out.loc[firm, cols[pos + 2 :]] = np.nan
 
     return out
 
 
-# =========================================================
-# Main cleaning pipeline for Part I
-# =========================================================
-def clean_part1_data(raw: Dict[str, pd.DataFrame], cfg: Config) -> Dict[str, pd.DataFrame]:
+# -------------------------------------------------
+# Main pipeline (Part I)
+# -------------------------------------------------
+def clean_part1(raw: Dict[str, pd.DataFrame], cfg: Config) -> Dict[str, pd.DataFrame]:
     """
-    Part I cleaning pipeline (static cleaning only):
-    Inputs expected in raw:
-        - RI_M (monthly RI)
-        - MV_M (monthly market value)
-        - CO2_Y (annual CO2 scope 1)
-        - STATIC (static info)
+    Apply Part I Data Cleaning rules to raw inputs.
 
-    Outputs:
-        - RI_M_RAW (after dropping full-missing rows, numeric)
-        - RI_M_CLEAN (low-price rule applied)
-        - RET_M (monthly returns from RI_M_CLEAN + delisting -100% rule applied)
-        - MV_M_CLEAN (aligned to RI firms, numeric)
-        - CO2_Y_CLEAN (ffill annual)
-        - STATIC (unchanged)
+    Input keys expected:
+      RI_M, MV_M, MV_Y, REV_Y, CO2_S1_Y, STATIC  (RI_Y and RF exist but not needed for cleaning core)
+
+    Output keys:
+      RI_M_RAW         : RI after dropping missing-price firms (reference universe)
+      RI_M_CLEAN       : RI after low-price rule
+      RET_M            : monthly returns from RI_M_CLEAN + delisting -100%
+      MV_M_CLEAN       : MV_M aligned to RI_M_RAW universe
+      MV_Y_CLEAN       : MV_Y aligned + forward-filled
+      REV_Y_CLEAN      : REV_Y aligned + forward-filled
+      CO2_S1_Y_CLEAN   : CO2 Scope 1 aligned + forward-filled (annual)
+      STATIC           : unchanged (region filtering done later in universe.py)
     """
     data = dict(raw)
 
-    # --- 1) RI: drop firms with no prices (missing prices)
-    ri_raw = data["RI_M"].copy()
-    ri_raw = ri_raw.apply(pd.to_numeric, errors="coerce")
-    ri_raw = drop_firms_with_no_prices(ri_raw)
-    ri_raw = _ensure_time_sorted(ri_raw)
+    # 1) Missing prices -> drop firms from RI_M (reference universe)
+    ri_raw = drop_firms_with_no_prices(data["RI_M"])
     data["RI_M_RAW"] = ri_raw
 
-    # --- 2) Align MV and CO2 to remaining firms (delete from all tables)
-    data["MV_M_CLEAN"] = align_firms_to_reference(
-        data["MV_M"].apply(pd.to_numeric, errors="coerce").dropna(axis=0, how="all"),
-        ri_raw.index,
-    )
-    data["MV_M_CLEAN"] = _ensure_time_sorted(data["MV_M_CLEAN"])
+    # 2) Align other tables to RI_M_RAW universe (delete from all tables)
+    mv_m = data["MV_M"].apply(pd.to_numeric, errors="coerce").dropna(axis=0, how="all")
+    mv_m = _ensure_datetime_sorted_columns(mv_m)
+    data["MV_M_CLEAN"] = _align_to_index(mv_m, ri_raw.index)
 
-    data["CO2_Y_CLEAN"] = align_firms_to_reference(
-        ffill_annual_table(data["CO2_Y"]),
-        ri_raw.index,
-    )
+    mv_y = forward_fill_annual(data["MV_Y"])
+    data["MV_Y_CLEAN"] = _align_to_index(mv_y, ri_raw.index)
 
-    # --- 3) Low prices rule on RI
+    rev_y = forward_fill_annual(data["REV_Y"])
+    data["REV_Y_CLEAN"] = _align_to_index(rev_y, ri_raw.index)
+
+    # CO2 Scope 1 (annual): forward-fill between reported years + align
+    co2_s1 = forward_fill_annual(data["CO2_S1_Y"])
+    data["CO2_S1_Y_CLEAN"] = _align_to_index(co2_s1, ri_raw.index)
+
+    # 3) Low price rule on RI (no forward fill)
     ri_clean = apply_low_price_rule(ri_raw, cfg.MIN_PRICE)
     data["RI_M_CLEAN"] = ri_clean
 
-    # --- 4) Monthly returns
-    ret_m = compute_returns_from_ri(ri_clean)
+    # 4) Monthly returns
+    ret_m = compute_monthly_returns_from_ri(ri_clean)
 
-    # --- 5) Delisting -100% rule (use RI_M_RAW to find last valid price)
+    # 5) Delisting -100% rule (use RI_M_RAW to find last valid price)
     ret_m = apply_delisting_minus_one(ret_m, ri_before_low_price=ri_raw)
-
     data["RET_M"] = ret_m
 
     # STATIC unchanged
     data["STATIC"] = data["STATIC"]
 
     return data
+
+
+# -------------------------------------------------
+# Quick test: python3 -m src.data_cleaning
+# -------------------------------------------------
+if __name__ == "__main__":
+    from .io import load_raw
+
+    cfg = Config()
+    raw = load_raw(cfg)
+    clean = clean_part1(raw, cfg)
+
+    print("Keys:", list(clean.keys()))
+    print("RI_M_RAW:", clean["RI_M_RAW"].shape)
+    print("RI_M_CLEAN:", clean["RI_M_CLEAN"].shape)
+    print("RET_M:", clean["RET_M"].shape)
+    print("MV_M_CLEAN:", clean["MV_M_CLEAN"].shape)
+    print("REV_Y_CLEAN:", clean["REV_Y_CLEAN"].shape)
+    print("CO2_S1_Y_CLEAN:", clean["CO2_S1_Y_CLEAN"].shape)
+    
