@@ -1,14 +1,16 @@
-# Ignorer l'environnement virtuel
+# Virtual environment
 venv/
 
-# Ignorer les dossiers de cache Python
+# Python cache
 __pycache__/
 *.pyc
 
-# Ignorer les données (fichiers bruts et nettoyés)
-data/
-#*.csv
+# Data (do not version raw/cleaned datasets)
+data/raw/
+data/cleaned/
+
+# Excel files (typically raw inputs)
 *.xlsx
 
-# Ignorer les paramètres locaux VS Code
+# VS Code
 .vscode/
