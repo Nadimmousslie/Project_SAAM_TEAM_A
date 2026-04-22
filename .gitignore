@@ -6,11 +6,11 @@ __pycache__/
 *.pyc
 
 # Data (do not version raw/cleaned datasets)
-data/raw/
+
 data/cleaned/
 
 # Excel files (typically raw inputs)
-*.xlsx
+
 
 # VS Code
 .vscode/
