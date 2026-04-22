@@ -1,10 +1,12 @@
 # Sustainability-Aware Asset Management
 ## Minimum-Variance Portfolio with Carbon Emission Reduction — AMER Region
 
-> **Course:** Sustainability Aware Asset Management — MSc Finance, HEC Lausanne  
+> **Course:** Sustainability Aware Asset Management — MScF Finance, HEC Lausanne  
 > **Professor:** Eric Jondeau  
 > **Region:** Americas (AMER)  
+> **Scope:** SCOPE 1
 > **Period:** Out-of-sample 2014–2024 (estimation window 2004–2013, rolling)
+> **Group:** GROUP A - Nadim MOUSSLIE / Leonard PERIGAULT / Mattia COMISETI / Matteo GIRAUD
 
 ---
 
@@ -241,5 +243,3 @@ After running `main.py`, the following files are generated in the project root:
 - The project uses **Scope 1** CO2 emissions as assigned to the group.
 - Out-of-sample period: **January 2014 → December 2024** (144 months).
 - The risk-free rate comes from the **Fama-French** data library (monthly, in %).
-
-
