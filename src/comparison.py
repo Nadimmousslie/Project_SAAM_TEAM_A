@@ -156,7 +156,7 @@ def _plot_cumulative(portfolios: dict, title: str, filename: str) -> None:
 
     path = str(_SRC_DIR.parent / filename)
     plt.savefig(path, dpi=150)
-    plt.show()
+    plt.close()
     print(f"  ✓ Plot saved → {path}")
 
 
@@ -193,6 +193,6 @@ def _plot_carbon_comparison(metrics_dict: dict,
 
     path = str(_SRC_DIR.parent / filename)
     plt.savefig(path, dpi=150)
-    plt.show()
+    plt.close()
     print(f"  ✓ Carbon comparison plot saved → {path}\n")
 

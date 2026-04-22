@@ -247,5 +247,5 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         path = str(output_dir / "carbon_metrics.png")
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
-    plt.show()
+    plt.close()
 

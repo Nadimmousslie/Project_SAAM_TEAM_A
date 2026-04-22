@@ -1,12 +1,11 @@
 # =============================================================
-# performance.py — Section 2.3: Performance Statistics & Plot
+# performance.py — Performance Statistics, Plot & Monthly Table
 # =============================================================
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from pathlib import Path
 from config import OUTPUT_PLOT, _SRC_DIR
 
 
@@ -15,14 +14,11 @@ from config import OUTPUT_PLOT, _SRC_DIR
 # ─────────────────────────────────────────────────────────────
 
 def compute_stats(ret: pd.Series, rf: pd.Series, label: str) -> dict:
-    rf_aligned  = rf.reindex(ret.index).fillna(0)
-    excess      = ret - rf_aligned
-
-    mu_ann    = ret.mean()    * 12
-    sigma_ann = ret.std()     * np.sqrt(12)
-    sr        = (excess.mean() / ret.std() * np.sqrt(12)
-                 if ret.std() > 0 else np.nan)
-
+    rf_aligned = rf.reindex(ret.index).fillna(0)
+    excess     = ret - rf_aligned
+    mu_ann     = ret.mean()  * 12
+    sigma_ann  = ret.std()   * np.sqrt(12)
+    sr         = excess.mean() / ret.std() * np.sqrt(12) if ret.std() > 0 else np.nan
     return {
         "label"  : label,
         "mu_p"   : mu_ann,
@@ -67,43 +63,23 @@ def print_stats_table(stats_mv: dict, stats_vw: dict) -> None:
 # ─────────────────────────────────────────────────────────────
 
 def build_monthly_table(mv_ret: pd.Series, vw_ret: pd.Series) -> pd.DataFrame:
-    """
-    Build a DataFrame with monthly returns for both portfolios.
-    Columns: Date | MV_Return | VW_Return
-    """
     common = mv_ret.index.union(vw_ret.index)
     df = pd.DataFrame({
         "MV_Return": mv_ret.reindex(common),
         "VW_Return": vw_ret.reindex(common),
     }, index=common)
     df.index.name = "Date"
-    df = df.sort_index()
-    return df
-
-
-def print_monthly_table(df: pd.DataFrame) -> None:
-    """Print monthly returns table in the terminal."""
-    print("=" * 55)
-    print("MONTHLY PORTFOLIO RETURNS")
-    print("=" * 55)
-    display = df.copy()
-    display["MV_Return"] = display["MV_Return"].map("{:.4%}".format)
-    display["VW_Return"] = display["VW_Return"].map("{:.4%}".format)
-    print(display.to_string())
-    print("=" * 55 + "\n")
+    return df.sort_index()
 
 
 def export_monthly_table(df: pd.DataFrame) -> None:
-    """Export monthly returns table to Excel."""
+    """Export monthly returns to Excel only — no terminal print."""
     output_path = str(_SRC_DIR.parent / "monthly_portfolio_returns.xlsx")
-
     export = df.copy().reset_index()
     export["Date"] = export["Date"].dt.strftime("%Y-%m-%d")
 
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
         export.to_excel(writer, index=False, sheet_name="Monthly Returns")
-
-        # Auto-fit column widths
         ws = writer.sheets["Monthly Returns"]
         for col in ws.columns:
             max_len = max(len(str(cell.value)) for cell in col if cell.value)
@@ -142,7 +118,7 @@ def plot_cumulative_returns(mv_ret: pd.Series,
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
-    plt.show()
+    plt.close()
     print(f"  ✓ Plot saved → {output_path}\n")
 
 
@@ -151,21 +127,19 @@ def plot_cumulative_returns(mv_ret: pd.Series,
 # ─────────────────────────────────────────────────────────────
 
 def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None:
-    """Compute stats, print table, plot cumulative returns, export monthly table."""
+    """Compute stats, plot cumulative returns, export monthly table (no terminal print)."""
 
-    # ── Performance stats ─────────────────────────────────────
     print("=" * 55)
     print("PERFORMANCE ANALYSIS")
     print("=" * 55)
+
     stats_mv = compute_stats(mv_ret, rf, "Min-Variance")
     stats_vw = compute_stats(vw_ret, rf, "Value-Weighted")
     print_stats_table(stats_mv, stats_vw)
 
-    # ── Cumulative return plot ────────────────────────────────
     plot_cumulative_returns(mv_ret, vw_ret)
 
-    # ── Monthly returns table ─────────────────────────────────
+    # Export to Excel only — no terminal print (fast)
     monthly_df = build_monthly_table(mv_ret, vw_ret)
-    print_monthly_table(monthly_df)
     export_monthly_table(monthly_df)
-    
+

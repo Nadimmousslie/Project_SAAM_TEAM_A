@@ -1,5 +1,9 @@
 # =============================================================
 # optimization.py — Section 2.2: Minimum-Variance Optimization
+# Uses 1/τ covariance denominator as per project consignes
+# ─────────────────────────────────────────────────────────────
+# Consignes formula:
+#   Σ_Y = (1/τ) Σ_{k=0}^{τ-1} (R_{t-k} - µ_Y)'(R_{t-k} - µ_Y)
 # =============================================================
 
 import numpy as np
@@ -9,63 +13,77 @@ from config import REBALANCE_YEARS, MIN_MONTHS_DATA
 
 
 # ─────────────────────────────────────────────────────────────
-# Core optimizer
+# COVARIANCE ESTIMATOR — 1/τ denominator (per consignes)
+# ─────────────────────────────────────────────────────────────
+
+def _covariance_matrix(ret: pd.DataFrame) -> pd.DataFrame:
+    """
+    Sample covariance matrix with 1/τ denominator as per project consignes.
+        Σ_Y = (1/τ) Σ (R - µ)'(R - µ)
+
+    Assets with fewer than MIN_MONTHS_DATA valid observations are dropped.
+    NaN values are filled with 0 before computation.
+    """
+    # Drop firms with too few observations
+    n_valid = ret.notna().sum(axis=1)
+    ret = ret[n_valid >= MIN_MONTHS_DATA]
+
+    if ret.shape[0] < 2:
+        return pd.DataFrame()
+
+    X    = ret.fillna(0).values.T   # (T × N)
+    T, N = X.shape
+
+    # Demean
+    mu = X.mean(axis=0)
+    Xc = X - mu
+
+    # Covariance with 1/τ denominator (biased — per consignes)
+    S = (Xc.T @ Xc) / T
+
+    # Drop firms with zero variance
+    var_diag = np.diag(S)
+    valid    = var_diag > 0
+    if valid.sum() < 2:
+        return pd.DataFrame()
+
+    S_clean   = S[np.ix_(valid, valid)]
+    kept      = [ret.index[i] for i in range(N) if valid[i]]
+
+    return pd.DataFrame(S_clean, index=kept, columns=kept)
+
+
+# ─────────────────────────────────────────────────────────────
+# OPTIMIZER
 # ─────────────────────────────────────────────────────────────
 
 def _min_variance_weights(cov: np.ndarray) -> np.ndarray:
     """
-    Solve the long-only minimum-variance problem:
-        min  w' Σ w
-        s.t. sum(w) = 1,  w_i >= 0  for all i
-
-    Uses SLSQP. Falls back to equal weights if optimization fails.
+    Long-only minimum-variance:
+        min  w'Σw   s.t.  Σw_i = 1,  w_i ≥ 0
     """
     n  = cov.shape[0]
     w0 = np.ones(n) / n
 
-    constraints = [{"type": "eq", "fun": lambda w: w.sum() - 1}]
-    bounds      = [(0.0, 1.0)] * n
-
     result = minimize(
-        fun        = lambda w: w @ cov @ w,
-        x0         = w0,
-        method     = "SLSQP",
-        bounds     = bounds,
-        constraints= constraints,
-        options    = {"ftol": 1e-12, "maxiter": 1000},
+        fun         = lambda w, S=cov: w @ S @ w,
+        x0          = w0,
+        method      = "SLSQP",
+        bounds      = [(0.0, 1.0)] * n,
+        constraints = [{"type": "eq", "fun": lambda w: w.sum() - 1}],
+        options     = {"ftol": 1e-9, "maxiter": 500},
     )
-
-    if result.success:
-        return result.x
-    else:
-        # Fallback: equal weight (should be rare)
-        return w0
-
-
-def _covariance_matrix(ret_eligible: pd.DataFrame) -> pd.DataFrame:
-    """
-    Estimate the covariance matrix from observed returns only.
-    Assets with undefined pairwise covariances are dropped before optimization.
-    """
-    sigma = ret_eligible.T.cov(min_periods=MIN_MONTHS_DATA)
-    valid_assets = sigma.notna().all(axis=1)
-    sigma = sigma.loc[valid_assets, valid_assets]
-    return sigma
+    return result.x if result.success else w0
 
 
 # ─────────────────────────────────────────────────────────────
-# Rolling optimization
+# ROLLING OPTIMIZATION
 # ─────────────────────────────────────────────────────────────
 
 def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
     """
-    For each year Y, estimate Σ_Y from the 10-year window and
-    solve the minimum-variance problem over the eligible firms.
-
-    Parameters
-    ----------
-    invest_sets : {year → list of eligible ISINs}
-    ret_windows : {year → DataFrame (all firms × window months)}
+    For each year Y, estimate Σ_Y (1/τ) and solve the min-variance problem.
+    Rebalances annually from 2013 to 2024.
 
     Returns
     -------
@@ -82,35 +100,30 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
             continue
 
         isins_Y = invest_sets[Y]
-
         if len(isins_Y) < 2:
             print(f"  {Y}: only {len(isins_Y)} firm(s) — skipped.")
             continue
 
-        ret_window = ret_windows[Y]
+        ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Keep only eligible firms and estimate covariance from observed returns
-        ret_eligible = ret_window.loc[isins_Y]
-
-        # ── Covariance matrix Σ_Y ────────────────────────────
-        Sigma_Y_df = _covariance_matrix(ret_eligible)
-        kept_isins = Sigma_Y_df.index.tolist()
-
-        if len(kept_isins) < 2:
-            print(f"  {Y}: insufficient overlap after covariance cleaning — skipped.")
+        # Covariance matrix (1/τ denominator)
+        sigma_df = _covariance_matrix(ret_window)
+        if sigma_df.shape[0] < 2:
+            print(f"  {Y}: insufficient data — skipped.")
             continue
 
-        Sigma_Y = Sigma_Y_df.values
+        kept  = sigma_df.index.tolist()
+        Sigma = sigma_df.values
 
-        # ── Optimize ─────────────────────────────────────────
-        w = _min_variance_weights(Sigma_Y)
+        # Optimize
+        w = _min_variance_weights(Sigma)
+        weights_dict[Y] = pd.Series(w, index=kept)
 
-        weights_dict[Y] = pd.Series(w, index=kept_isins)
-
-        port_var = w @ Sigma_Y @ w
-        print(f"  {Y}: {len(kept_isins):>4} firms | "
+        port_var = w @ Sigma @ w
+        print(f"  {Y}: {len(kept):>4} firms | "
               f"port. variance = {port_var:.6f} | "
               f"ann. vol = {np.sqrt(port_var * 12) * 100:.2f}%")
 
     print(f"  ✓ Optimization done for {len(weights_dict)} years.\n")
     return weights_dict
+
