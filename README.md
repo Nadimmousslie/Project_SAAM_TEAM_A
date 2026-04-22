@@ -1,12 +1,12 @@
 # Sustainability-Aware Asset Management
 ## Minimum-Variance Portfolio with Carbon Emission Reduction — AMER Region
 
-> **Course:** Sustainability Aware Asset Management — MScF Finance, HEC Lausanne  
-> **Professor:** Eric Jondeau  
-> **Region:** Americas (AMER)  
-> **Scope:** SCOPE 1
-> **Period:** Out-of-sample 2014–2024 (estimation window 2004–2013, rolling)
-> **Group:** GROUP A - Nadim MOUSSLIE / Leonard PERIGAULT / Mattia COMISETI / Matteo GIRAUD
+> **Course:** Sustainability Aware Asset Management — MScF Finance, HEC Lausanne<br>
+> **Professor:** Eric Jondeau<br>
+> **Region:** Americas (AMER)<br>
+> **Scope:** SCOPE 1<br>
+> **Period:** Out-of-sample 2014–2024 (estimation window 2004–2013, rolling)<br>
+> **Group:** GROUP A - Nadim MOUSSLIE - Leonard PERIGAULT - Mattia COMISETI - Matteo GIRAUD
 
 ---
 
