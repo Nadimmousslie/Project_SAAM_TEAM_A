@@ -56,8 +56,7 @@ def _vw_weights_year(invest_sets, mv_y, year):
 def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
     """
     Compute covariance matrices once for all years.
-    Uses 1/τ denominator as specified in the project consignes:
-        Σ_Y = (1/τ) Σ (R - µ)'(R - µ)
+    Uses 1/(T-1) unbiased estimator — same as optimization.py.
     Returns {year → (Sigma_np, kept_isins)}
     """
     print("  Pre-computing covariance matrices...", end=" ", flush=True)
@@ -68,29 +67,15 @@ def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
         isins_Y    = invest_sets[Y]
         ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Drop firms with too few observations
-        n_valid   = ret_window.notna().sum(axis=1)
-        ret_clean = ret_window[n_valid >= 36]
+        # Same method as optimization.py — pandas .cov() with 1/(T-1)
+        sigma_df = ret_window.T.cov(min_periods=36)
+        valid    = sigma_df.notna().all(axis=1)
+        sigma_df = sigma_df.loc[valid, valid]
 
-        if ret_clean.shape[0] < 2:
+        if sigma_df.shape[0] < 2:
             continue
 
-        # Fill NaN with 0 then compute with 1/τ denominator (biased, per consignes)
-        X  = ret_clean.fillna(0).values.T   # (T × N)
-        T, N = X.shape
-        mu = X.mean(axis=0)
-        Xc = X - mu
-        S  = (Xc.T @ Xc) / T               # ← 1/τ as per consignes
-
-        # Drop firms with zero variance (numerical issues)
-        var_diag = np.diag(S)
-        valid    = var_diag > 0
-        if valid.sum() < 2:
-            continue
-
-        S_clean   = S[np.ix_(valid, valid)]
-        kept      = [ret_clean.index[i] for i in range(N) if valid[i]]
-        sigmas[Y] = (S_clean, kept)
+        sigmas[Y] = (sigma_df.values, sigma_df.index.tolist())
 
     print(f"done ({len(sigmas)} years).")
     return sigmas
@@ -223,7 +208,11 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
         weights_te[Y] = pd.Series(w, index=kept)
 
         cf_ach = _cf_constraint_value(w, co2_arr, cap_arr)
-        te     = np.sqrt((w - w_vw_arr) @ Sigma @ (w - w_vw_arr) * 12) * 100
+
+        # --- MINIMAL FIX: clamp numerical negatives before sqrt ---
+        quad = float((w - w_vw_arr) @ Sigma @ (w - w_vw_arr))
+        te   = np.sqrt(max(quad, 0.0) * 12) * 100
+
         print(f"  {Y}: CF_vw={cf_vw:.1f} | target={cf_target:.1f} | "
               f"achieved={cf_ach:.1f} | TE={te:.2f}%")
 
@@ -317,9 +306,12 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
         weights_nz[Y] = pd.Series(w, index=kept)
 
         cf_ach = _cf_constraint_value(w, co2_arr, cap_arr)
-        te     = np.sqrt((w - w_vw_arr) @ Sigma @ (w - w_vw_arr) * 12) * 100
+
+        # --- MINIMAL FIX: clamp numerical negatives before sqrt ---
+        quad = float((w - w_vw_arr) @ Sigma @ (w - w_vw_arr))
+        te   = np.sqrt(max(quad, 0.0) * 12) * 100
+
         print(f"  {Y}: target={cf_target:.4f} | achieved={cf_ach:.4f} | TE={te:.2f}%")
 
     print(f"  ✓ done for {len(weights_nz)} years.\n")
     return weights_nz
-
