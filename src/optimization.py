@@ -1,6 +1,6 @@
 # =============================================================
 # optimization.py — Section 2.2: Minimum-Variance Optimization
-# Uses 1/(T-1) denominator (unbiased sample covariance)
+# Uses 1/τ denominator as per project consignes (Section 2.1)
 # =============================================================
 
 import numpy as np
@@ -10,16 +10,16 @@ from config import REBALANCE_YEARS, MIN_MONTHS_DATA
 
 
 # ─────────────────────────────────────────────────────────────
-# COVARIANCE ESTIMATOR — 1/(T-1) unbiased (pandas standard)
+# COVARIANCE ESTIMATOR — 1/τ denominator (per consignes)
 # ─────────────────────────────────────────────────────────────
 
 def _covariance_matrix(ret: pd.DataFrame) -> pd.DataFrame:
     """
-    Sample covariance matrix with 1/(T-1) denominator (unbiased).
+    Sample covariance matrix with 1/τ denominator as per project consignes:
+        Σ_Y = (1/τ) Σ_{k=0}^{τ-1} (R_{t-k} - μ̂_Y)'(R_{t-k} - μ̂_Y)
     Assets with fewer than MIN_MONTHS_DATA valid observations are dropped.
-    Uses pandas .cov() with min_periods for robustness.
     """
-    sigma = ret.T.cov(min_periods=MIN_MONTHS_DATA)
+    sigma = ret.T.cov(min_periods=MIN_MONTHS_DATA, ddof=0)
     valid = sigma.notna().all(axis=1)
     sigma = sigma.loc[valid, valid]
     return sigma
@@ -54,7 +54,7 @@ def _min_variance_weights(cov: np.ndarray) -> np.ndarray:
 
 def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
     """
-    For each year Y, estimate Σ_Y (1/(T-1)) and solve the min-variance problem.
+    For each year Y, estimate Σ_Y (1/τ per consignes) and solve the min-variance problem.
     Rebalances annually from 2013 to 2024.
 
     Returns
@@ -78,7 +78,7 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
 
         ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Covariance matrix (1/(T-1) unbiased)
+        # Covariance matrix (1/τ per consignes)
         sigma_df = _covariance_matrix(ret_window)
         if sigma_df.shape[0] < 2:
             print(f"  {Y}: insufficient data — skipped.")
@@ -98,4 +98,5 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
 
     print(f"  ✓ Optimization done for {len(weights_dict)} years.\n")
     return weights_dict
+
 
