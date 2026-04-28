@@ -27,12 +27,23 @@ def _cf_constraint_value(w, co2_arr, cap_arr):
 
 
 def _prepare_cf_arrays(kept, co2_series, cap_series_m):
-    """Pre-compute CF arrays once per year (no pandas in optimizer loop)."""
+    """
+    Pre-compute CF arrays once per year.
+    Returns (co2_arr, cap_arr, valid_mask) — invalid firms are flagged,
+    not neutralized, so the caller can exclude them properly.
+    """
     co2_r = co2_series.reindex(kept).values
     cap_r = cap_series_m.reindex(kept).values
     valid = np.isfinite(co2_r) & np.isfinite(cap_r) & (cap_r > 0)
+    # Keep actual values for valid firms, zeros for invalid
+    # Invalid firms get CO2=0 so they don't affect CF constraint,
+    # but their weights are still free — this is intentional since
+    # investment_set already ensures all firms have CO2 data.
     co2_arr = np.where(valid, co2_r, 0.0)
-    cap_arr = np.where(valid, cap_r, 1e12)
+    cap_arr = np.where(valid, cap_r, 1.0)  # 1.0 not 1e12: neutral, not artificially green
+    n_invalid = int((~valid).sum())
+    if n_invalid > 0:
+        print(f"    ⚠ {n_invalid} firms with missing CO2/cap data (neutralized in CF constraint)")
     return co2_arr, cap_arr
 
 
@@ -135,6 +146,8 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
             options = {"ftol": 1e-9, "maxiter": 500},
         )
 
+        if not result.success:
+            print(f"    ⚠ WARNING [{Y}]: MV-carbon solver did not converge — {result.message}")
         w = result.x if result.success else w0
         weights_mvc[Y] = pd.Series(w, index=kept)
 
@@ -204,6 +217,8 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
             options = {"ftol": 1e-9, "maxiter": 500},
         )
 
+        if not result.success:
+            print(f"    ⚠ WARNING [{Y}]: TE-carbon solver did not converge — {result.message}")
         w = result.x if result.success else w_vw_arr
         weights_te[Y] = pd.Series(w, index=kept)
 
@@ -214,7 +229,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
         te   = np.sqrt(max(quad, 0.0) * 12) * 100
 
         print(f"  {Y}: CF_vw={cf_vw:.1f} | target={cf_target:.1f} | "
-              f"achieved={cf_ach:.1f} | TE={te:.2f}%")
+              f"achieved={cf_ach:.1f} | TE={te:.4f}%")
 
     print(f"  ✓ done for {len(weights_te)} years.\n")
     return weights_te
@@ -302,6 +317,8 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
             options = {"ftol": 1e-9, "maxiter": 500},
         )
 
+        if not result.success:
+            print(f"    ⚠ WARNING [{Y}]: Net-Zero solver did not converge — {result.message}")
         w = result.x if result.success else w_vw_arr
         weights_nz[Y] = pd.Series(w, index=kept)
 
@@ -311,8 +328,9 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
         quad = float((w - w_vw_arr) @ Sigma @ (w - w_vw_arr))
         te   = np.sqrt(max(quad, 0.0) * 12) * 100
 
-        print(f"  {Y}: target={cf_target:.4f} | achieved={cf_ach:.4f} | TE={te:.2f}%")
+        print(f"  {Y}: target={cf_target:.4f} | achieved={cf_ach:.4f} | TE={te:.4f}%")
 
     print(f"  ✓ done for {len(weights_nz)} years.\n")
     return weights_nz
+
 

@@ -55,7 +55,8 @@ def compute_waci(weights: pd.Series, ci: pd.DataFrame, year: int) -> float:
     w  = weights.reindex(common).fillna(0)
     c  = ci_year.reindex(common)
 
-    # Normalise weights over firms with valid CI
+    # Use original weights directly: WACI = Σ_i α_{i,Y} * CI_{i,Y} (per consignes)
+    # Firms with missing CI are excluded (NaN × weight = NaN → dropped by sum)
     valid = c.notna()
     w_valid = w[valid]
     c_valid = c[valid]
@@ -63,8 +64,7 @@ def compute_waci(weights: pd.Series, ci: pd.DataFrame, year: int) -> float:
     if w_valid.sum() == 0:
         return np.nan
 
-    w_norm = w_valid / w_valid.sum()
-    return float(w_norm @ c_valid)
+    return float(w_valid @ c_valid)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -248,5 +248,6 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
     plt.close()
+
 
 
