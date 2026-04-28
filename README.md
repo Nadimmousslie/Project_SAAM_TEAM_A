@@ -5,7 +5,7 @@
 > **Professor:** Eric Jondeau<br>
 > **Region:** Americas (AMER)<br>
 > **Scope:** SCOPE 1<br>
-> **Period:** Out-of-sample 2014–2024 (estimation window 2004–2013, rolling)<br>
+> **Period:** Out-of-sample 2014–2025 (estimation window 2004–2013, rolling)<br>
 > **Group:** GROUP A - Nadim MOUSSLIE - Leonard PERIGAULT - Mattia COMISETI - Matteo GIRAUD
 
 ---
@@ -136,6 +136,7 @@ s.t.  Σ w = 1
 - Estimation window: **10 years** (120 months) ending at December of year Y
 - Rebalanced annually from **2013 to 2024**
 - Covariance matrix estimated with `min_periods=36`
+- Covariance uses **1/τ denominator** (`ddof=0`) as per project specifications
 
 ### Section 2.3 — Benchmark (`portfolio_returns.py`, `performance.py`)
 
@@ -198,7 +199,7 @@ Compares 4 portfolios: **P^(mv)**, **P^(mv)(0.5)**, **P^(vw)**, **P^(vw)(0.5)**
 Portfolio **P^(vw)(NZ)** — annually tightening carbon constraint (θ = 10%/year):
 
 ```
-CF_Y(w) ≤ (1 - 0.10)^(Y - 2013) × CF_{2013}(P^(vw))
+CF_Y(w) ≤ (1 - 0.10)^(Y - 2013 + 1) × CF_{2013}(P^(vw))
 ```
 
 ### Section 4.2 — Comparison (`comparison.py`)
@@ -241,5 +242,6 @@ After running `main.py`, the following files are generated in the project root:
 
 - All portfolios are **long-only** (no short sales) to facilitate carbon footprint interpretation.
 - The project uses **Scope 1** CO2 emissions as assigned to the group.
-- Out-of-sample period: **January 2014 → December 2024** (144 months).
+- Out-of-sample period: **January 2014 → December 2025** (144 months).
 - The risk-free rate comes from the **Fama-French** data library (monthly, in %).
+
