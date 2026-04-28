@@ -46,7 +46,7 @@ def compare_portfolios_34(mv_ret: pd.Series,
 
     # ── Cumulative returns ────────────────────────────────────
     _plot_cumulative(portfolios,
-                     title="Cumulative Returns — Section 3.4 (AMER, 2014–2024)",
+                     title="Cumulative Returns — Section 3.4 (AMER, 2014–2025)",
                      filename="comparison_34_cumulative.png")
 
     # ── Carbon metrics ────────────────────────────────────────
@@ -92,7 +92,7 @@ def compare_portfolios_42(vw_ret: pd.Series,
 
     # ── Cumulative returns ────────────────────────────────────
     _plot_cumulative(portfolios,
-                     title="Cumulative Returns — Section 4.2 (AMER, 2014–2024)",
+                     title="Cumulative Returns — Section 4.2 (AMER, 2014–2025)",
                      filename="comparison_42_cumulative.png")
 
     # ── Carbon metrics ────────────────────────────────────────
@@ -195,4 +195,5 @@ def _plot_carbon_comparison(metrics_dict: dict,
     plt.savefig(path, dpi=150)
     plt.close()
     print(f"  ✓ Carbon comparison plot saved → {path}\n")
+
 
