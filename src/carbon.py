@@ -88,7 +88,7 @@ def compute_cf(weights: pd.Series,
         CF_Y^(p) = Σ_i (α_{i,Y} / Cap_{i,Y}) * E_{i,Y}
 
     Units: tonnes CO2e per million USD invested.
-    Cap_{i,Y} is in millions USD (MV in Datastream is in USD thousands → /1000).
+    Cap_{i,Y} is in millions USD (per consignes: "in million USD").
     """
     # Get December column for year Y
     def _get_dec(df):
@@ -102,7 +102,7 @@ def compute_cf(weights: pd.Series,
     if co2_year is None or cap_year is None:
         return np.nan
 
-    cap_year_m = cap_year / 1000   # USD thousands → millions USD
+    cap_year_m = cap_year  # Already in million USD per consignes
 
     common = weights.index.intersection(co2_year.index).intersection(cap_year_m.index)
     w   = weights.reindex(common).fillna(0)
@@ -248,4 +248,5 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
     plt.close()
+
 
