@@ -50,13 +50,13 @@ def _vw_weights_year(invest_sets, mv_y, year):
 
 # ─────────────────────────────────────────────────────────────
 # PRE-COMPUTE ALL COVARIANCE MATRICES ONCE
-# Uses 1/τ denominator as per consignes (not 1/(T-1))
+# Uses 1/τ denominator as per consignes (Section 2.1)
 # ─────────────────────────────────────────────────────────────
 
 def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
     """
     Compute covariance matrices once for all years.
-    Uses 1/(T-1) unbiased estimator — same as optimization.py.
+    Uses 1/τ denominator — same as optimization.py, per consignes.
     Returns {year → (Sigma_np, kept_isins)}
     """
     print("  Pre-computing covariance matrices...", end=" ", flush=True)
@@ -67,8 +67,8 @@ def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
         isins_Y    = invest_sets[Y]
         ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Same method as optimization.py — pandas .cov() with 1/(T-1)
-        sigma_df = ret_window.T.cov(min_periods=36)
+        # Same method as optimization.py — 1/τ (ddof=0) per consignes
+        sigma_df = ret_window.T.cov(min_periods=36, ddof=0)
         valid    = sigma_df.notna().all(axis=1)
         sigma_df = sigma_df.loc[valid, valid]
 
@@ -116,7 +116,7 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col] / 1000)
+            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
 
         # Warm start from MV weights
         w0 = weights_mv[Y].reindex(kept).fillna(0).values
@@ -189,7 +189,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col] / 1000)
+            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
 
         result = minimize(
             fun         = lambda w, S=Sigma, b=w_vw_arr: (w-b) @ S @ (w-b),
@@ -287,7 +287,7 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col] / 1000)
+            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
 
         result = minimize(
             fun         = lambda w, S=Sigma, b=w_vw_arr: (w-b) @ S @ (w-b),
@@ -315,3 +315,4 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
 
     print(f"  ✓ done for {len(weights_nz)} years.\n")
     return weights_nz
+
