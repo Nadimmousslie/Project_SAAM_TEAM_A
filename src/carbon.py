@@ -239,7 +239,7 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
     axes[1].legend()
     axes[1].grid(True, alpha=0.3)
 
-    plt.suptitle("Carbon Metrics — AMER Region (2013–2024)",
+    plt.suptitle("WACI & CF of MV & VW — AMER Region (2013-2024)",
                  fontsize=13, fontweight="bold")
     plt.tight_layout()
 
@@ -248,6 +248,7 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
     plt.close()
+
 
 
 

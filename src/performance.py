@@ -107,7 +107,7 @@ def plot_cumulative_returns(mv_ret: pd.Series,
             label="Value-Weighted  $P^{vw}$",
             linewidth=2.0, color="darkorange", linestyle="--")
 
-    ax.set_title("Cumulative Returns — AMER Region (2014–2025)",
+    ax.set_title("Cumulative Returns — AMER Region (2014-2025) - MV & VW",
                  fontsize=14, fontweight="bold")
     ax.set_xlabel("Date", fontsize=11)
     ax.set_ylabel("Cumulative Return  (base = 1 at start)", fontsize=11)
@@ -142,5 +142,6 @@ def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None
     # Export to Excel only — no terminal print (fast)
     monthly_df = build_monthly_table(mv_ret, vw_ret)
     export_monthly_table(monthly_df)
+
 
 

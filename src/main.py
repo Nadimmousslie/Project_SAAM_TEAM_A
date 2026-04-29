@@ -17,7 +17,9 @@ from carbon_portfolio   import (precompute_sigmas,
                                 run_mv_carbon,
                                 run_te_carbon,
                                 run_net_zero)
-from comparison         import compare_portfolios_34, compare_portfolios_42
+from comparison         import (compare_portfolios_34, compare_portfolios_42,
+                                compare_mv_carbon_32, compare_vw_carbon_33,
+                                compare_all_portfolios)
 from config             import REBALANCE_YEARS, _SRC_DIR
 import pandas as pd
 
@@ -88,6 +90,9 @@ def main():
     metrics_mvc = compute_portfolio_carbon_metrics(
         weights_mvc, ci, data["co2"], data["mv_y"], label="MV(0.5)")
 
+    # Section 3.2 — Comparison MV vs MV(0.5)
+    compare_mv_carbon_32(mv_ret, mvc_ret, data["rf"], metrics_mv, metrics_mvc)
+
     # Section 3.3 — Tracking error + carbon constraint
     weights_tec = run_te_carbon(
         invest_sets, ret_windows, data["mv_y"],
@@ -95,6 +100,9 @@ def main():
     tec_ret = compute_mv_returns(weights_tec, data["returns_m"])
     metrics_tec = compute_portfolio_carbon_metrics(
         weights_tec, ci, data["co2"], data["mv_y"], label="VW(0.5)")
+
+    # Section 3.3 — Comparison VW vs VW(0.5)
+    compare_vw_carbon_33(vw_ret, tec_ret, data["rf"], metrics_vw, metrics_tec)
 
     # Section 3.4 — Comparison
     compare_portfolios_34(
@@ -120,6 +128,10 @@ def main():
         vw_ret, tec_ret, nz_ret, data["rf"],
         metrics_vw, metrics_tec, metrics_nz)
 
+    # Section 3.6 — All 5 portfolios comparison
+    compare_all_portfolios(
+        mv_ret, mvc_ret, vw_ret, tec_ret, nz_ret, data["rf"])
+
     print("\n" + "█" * 60)
     print("  ALL DONE")
     print("█" * 60 + "\n")
@@ -127,4 +139,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
