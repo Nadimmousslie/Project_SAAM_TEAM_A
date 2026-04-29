@@ -1,7 +1,4 @@
-# =============================================================
-# optimization.py — Section 2.2: Minimum-Variance Optimization
-# Uses 1/τ denominator as per project consignes (Section 2.1)
-# =============================================================
+### optimization.py — Section 2.2: Minimum-Variance Optimization ###
 
 import numpy as np
 import pandas as pd
@@ -100,6 +97,3 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
 
     print(f"  ✓ Optimization done for {len(weights_dict)} years.\n")
     return weights_dict
-
-
-

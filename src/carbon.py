@@ -1,11 +1,8 @@
-# =============================================================
-# carbon.py — Section 3.1: Carbon Intensity, WACI & CF
-# =============================================================
+### carbon.py — Section 3.1: Carbon Intensity, WACI & CF ###
 
 import numpy as np
 import pandas as pd
 from config import REBALANCE_YEARS, _SRC_DIR
-
 
 # ─────────────────────────────────────────────────────────────
 # 1. CARBON INTENSITY
@@ -248,7 +245,3 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
     plt.close()
-
-
-
-

@@ -1,6 +1,4 @@
-# =============================================================
-# comparison.py — Sections 3.4 & 4.2: Portfolio Comparison
-# =============================================================
+### comparison.py — Sections 3.4 & 4.2: Portfolio Comparison ###
 
 import numpy as np
 import pandas as pd

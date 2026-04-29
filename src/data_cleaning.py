@@ -1,6 +1,4 @@
-# =============================================================
-# data_cleaning.py — Section 1: Data Cleaning
-# =============================================================
+### data_cleaning.py — Section 1: Data Cleaning ###
 
 import numpy as np
 import pandas as pd
@@ -164,3 +162,4 @@ def is_stale(return_series: pd.Series, threshold: float = STALE_THRESHOLD) -> bo
     if len(valid) == 0:
         return True
     return (valid == 0).mean() > threshold
+

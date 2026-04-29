@@ -1,6 +1,4 @@
-# =============================================================
-# investment_set.py — Section 2.1: Investment Set per Year
-# =============================================================
+### investment_set.py — Section 2.1: Investment Set per Year ###
 
 import pandas as pd
 from config import TAU, MIN_MONTHS_DATA, REBALANCE_YEARS
@@ -103,3 +101,4 @@ def build_investment_sets(data: dict) -> dict:
 
     print(f"  ✓ Investment sets built for {len(invest_sets)} years.\n")
     return invest_sets, ret_windows
+

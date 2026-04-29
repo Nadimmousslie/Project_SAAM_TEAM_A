@@ -1,13 +1,10 @@
-# =============================================================
-# performance.py — Performance Statistics, Plot & Monthly Table
-# =============================================================
+### performance.py — Performance Statistics, Plot & Monthly Table ###
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from config import OUTPUT_PLOT, _SRC_DIR
-
 
 # ─────────────────────────────────────────────────────────────
 # Summary statistics

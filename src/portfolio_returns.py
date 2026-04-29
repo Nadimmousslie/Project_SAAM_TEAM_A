@@ -1,6 +1,4 @@
-# =============================================================
-# portfolio_returns.py — Ex-post portfolio returns (MV & VW)
-# =============================================================
+### portfolio_returns.py — Ex-post portfolio returns (MV & VW) ###
 
 import pandas as pd
 import numpy as np
@@ -11,7 +9,6 @@ def _get_dec_col(df: pd.DataFrame, year: int):
     cols = pd.DatetimeIndex(df.columns)
     dec_cols = cols[(cols.year == year) & (cols.month == 12)]
     return dec_cols[-1] if len(dec_cols) > 0 else None
-
 
 # ─────────────────────────────────────────────────────────────
 # Min-Variance ex-post returns

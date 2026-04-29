@@ -1,13 +1,9 @@
-# =============================================================
-# config.py — Global parameters & file paths
-# =============================================================
+### config.py — Global parameters & file paths ###
 
 from pathlib import Path
 
-# Chemin absolu du dossier contenant config.py (= src/)
 _SRC_DIR = Path(__file__).resolve().parent
 
-# Remonte d'un niveau (TESTSAAM/) puis descend dans data/raw/
 DATA_DIR = _SRC_DIR.parent / "data" / "raw"
 
 PATHS = {
@@ -21,21 +17,21 @@ PATHS = {
     "revenue"    : DATA_DIR / "DS_REV_Y_2025.xlsx",
 }
 
-# ── Region ────────────────────────────────────────────────────
+# REGION SELECTION 
 REGION = "AMER"
 
-# ── Estimation window ─────────────────────────────────────────
+# ESTIMATION WINDOW 
 ESTIMATION_YEARS = 10
 TAU              = ESTIMATION_YEARS * 12   # = 120 months
 
-# ── Rebalancing years ─────────────────────────────────────────
+# REBALANCING YEARS 
 REBALANCE_YEARS = list(range(2013, 2025))  # 2013 → 2024
 
-# ── Data-cleaning thresholds ──────────────────────────────────
+# DATA-CLEANING THRESHOLDS 
 LOW_PRICE_THRESHOLD = 0.5    # RI below this → treated as missing
 STALE_THRESHOLD     = 0.50   # proportion of zero returns → stale
 MIN_MONTHS_DATA     = 36     # minimum valid monthly observations
 
-# ── Output ────────────────────────────────────────────────────
+# OUTPUT PATHS
 OUTPUT_PLOT = str(_SRC_DIR.parent / "cumulative_returns.png")
 

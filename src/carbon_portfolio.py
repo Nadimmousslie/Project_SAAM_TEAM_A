@@ -1,7 +1,4 @@
-# =============================================================
-# carbon_portfolio.py — Sections 3.2, 3.3, 4.1
-# Carbon-constrained portfolio optimization (optimized)
-# =============================================================
+### carbon_portfolio.py — Sections 3.2, 3.3, 4.1 - Carbon-constrained portfolio optimization ###
 
 import numpy as np
 import pandas as pd
@@ -61,7 +58,6 @@ def _vw_weights_year(invest_sets, mv_y, year):
 
 # ─────────────────────────────────────────────────────────────
 # PRE-COMPUTE ALL COVARIANCE MATRICES ONCE
-# Uses 1/τ denominator as per consignes (Section 2.1)
 # ─────────────────────────────────────────────────────────────
 
 def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
@@ -237,7 +233,6 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
 
 # ─────────────────────────────────────────────────────────────
 # SECTION 4.1 — Net Zero  P_oos^(vw)(NZ)
-# FIXED: exponent is (Y - Y0 + 1) as per consignes
 # ─────────────────────────────────────────────────────────────
 
 def run_net_zero(invest_sets, ret_windows, mv_y_bench,

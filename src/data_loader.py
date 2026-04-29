@@ -1,6 +1,4 @@
-# =============================================================
-# data_loader.py — Load & parse all Datastream Excel files
-# =============================================================
+### data_loader.py — Load & parse all Datastream Excel files ###
 
 import pandas as pd
 from config import PATHS, REGION
@@ -134,3 +132,4 @@ def load_all(region=REGION):
         "static"    : static,
         "amer_isins": amer_isins,
     }
+

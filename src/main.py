@@ -1,7 +1,4 @@
-# =============================================================
-# main.py — Entry point
-# Run:  python main.py
-# =============================================================
+#### main.py — Entry point for Run:  python3 main.py ###
 
 from data_loader        import load_all
 from data_cleaning      import clean_all
