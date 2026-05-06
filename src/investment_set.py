@@ -1,13 +1,9 @@
-### investment_set.py — Section 2.1: Investment Set per Year ###
+# investment_set.py — Investment set construction (Section 2.1)
 
 import pandas as pd
 from config import TAU, MIN_MONTHS_DATA, REBALANCE_YEARS
 from data_cleaning import is_stale
 
-
-# ─────────────────────────────────────────────────────────────
-# Helper
-# ─────────────────────────────────────────────────────────────
 
 def _get_dec_col(df: pd.DataFrame, year: int):
     """
@@ -18,10 +14,6 @@ def _get_dec_col(df: pd.DataFrame, year: int):
     dec_cols = cols[(cols.year == year) & (cols.month == 12)]
     return dec_cols[-1] if len(dec_cols) > 0 else None
 
-
-# ─────────────────────────────────────────────────────────────
-# Main function
-# ─────────────────────────────────────────────────────────────
 
 def build_investment_sets(data: dict) -> dict:
     """
@@ -56,35 +48,35 @@ def build_investment_sets(data: dict) -> dict:
             print(f"  {Y}: no December returns column — skipped.")
             continue
 
-        # ── Estimation window: TAU months ending at Dec Y ────
+        # Estimation window: TAU months ending at Dec Y
         all_cols   = pd.DatetimeIndex(returns_m.columns)
         window_cols = all_cols[all_cols <= dec_Y][-TAU:]
         ret_window  = returns_m[window_cols]
 
-        # ── Criterion 2: CO2 available at end of Y ───────────
+        # Criterion 2: CO2 available at end of Y
         co2_dec = _get_dec_col(co2, Y)
         if co2_dec is not None:
             has_co2 = co2[co2_dec].notna()
         else:
             has_co2 = pd.Series(False, index=co2.index)
 
-        # ── Criterion 3: price not missing at end of Y ───────
+        # Criterion 3: price not missing at end of Y
         ri_dec = _get_dec_col(ri_m, Y)
         if ri_dec is not None:
             has_price = ri_m[ri_dec].notna()
         else:
             has_price = pd.Series(False, index=ri_m.index)
 
-        # ── Criterion 4: enough valid monthly observations ────
+        # Criterion 4: enough valid monthly observations
         n_valid     = ret_window.notna().sum(axis=1)
         enough_data = n_valid >= MIN_MONTHS_DATA
 
-        # ── Criterion 5: not stale ────────────────────────────
+        # Criterion 5: not stale
         not_stale = ret_window.apply(
             lambda row: not is_stale(row), axis=1
         )
 
-        # ── Combine ───────────────────────────────────────────
+        # Combine all criteria
         eligible = (
             has_co2.reindex(ret_window.index,  fill_value=False)
             & has_price.reindex(ret_window.index, fill_value=False)
@@ -101,4 +93,3 @@ def build_investment_sets(data: dict) -> dict:
 
     print(f"  ✓ Investment sets built for {len(invest_sets)} years.\n")
     return invest_sets, ret_windows
-

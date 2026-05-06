@@ -1,13 +1,9 @@
-### data_cleaning.py — Section 1: Data Cleaning ###
+# data_cleaning.py — Data cleaning (Section 1 of the project)
 
 import numpy as np
 import pandas as pd
 from config import LOW_PRICE_THRESHOLD, STALE_THRESHOLD
 
-
-# ─────────────────────────────────────────────────────────────
-# Public entry point
-# ─────────────────────────────────────────────────────────────
 
 def clean_all(data: dict) -> dict:
     """
@@ -59,9 +55,7 @@ def clean_all(data: dict) -> dict:
     return data
 
 
-# ─────────────────────────────────────────────────────────────
-# Individual cleaning steps
-# ─────────────────────────────────────────────────────────────
+# --- Individual cleaning steps ---
 
 def _drop_all_nan_isins(ri_m: pd.DataFrame) -> pd.Index:
     """
@@ -149,9 +143,7 @@ def _compute_returns(ri_m: pd.DataFrame) -> pd.DataFrame:
     return returns_m
 
 
-# ─────────────────────────────────────────────────────────────
 # Stale price check (used per firm per window in investment_set)
-# ─────────────────────────────────────────────────────────────
 
 def is_stale(return_series: pd.Series, threshold: float = STALE_THRESHOLD) -> bool:
     """
@@ -162,4 +154,3 @@ def is_stale(return_series: pd.Series, threshold: float = STALE_THRESHOLD) -> bo
     if len(valid) == 0:
         return True
     return (valid == 0).mean() > threshold
-

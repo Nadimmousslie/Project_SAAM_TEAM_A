@@ -1,4 +1,4 @@
-### carbon_portfolio.py — Sections 3.2, 3.3, 4.1 - Carbon-constrained portfolio optimization ###
+# carbon_portfolio.py — Carbon-constrained optimization (Sections 3.2, 3.3, 4.1)
 
 import numpy as np
 import pandas as pd
@@ -7,9 +7,7 @@ from config import REBALANCE_YEARS
 from carbon import compute_cf
 
 
-# ─────────────────────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────────────────────
+# Helpers
 
 def _get_dec(df: pd.DataFrame, year: int):
     """Return December column LABEL (Timestamp) for a given year, or None."""
@@ -26,18 +24,15 @@ def _cf_constraint_value(w, co2_arr, cap_arr):
 def _prepare_cf_arrays(kept, co2_series, cap_series_m):
     """
     Pre-compute CF arrays once per year.
-    Returns (co2_arr, cap_arr, valid_mask) — invalid firms are flagged,
-    not neutralized, so the caller can exclude them properly.
+    Returns (co2_arr, cap_arr) — invalid firms get CO2=0 so they
+    don't affect the CF constraint. Their weights are still free since
+    investment_set already ensures all firms have CO2 data.
     """
     co2_r = co2_series.reindex(kept).values
     cap_r = cap_series_m.reindex(kept).values
     valid = np.isfinite(co2_r) & np.isfinite(cap_r) & (cap_r > 0)
-    # Keep actual values for valid firms, zeros for invalid
-    # Invalid firms get CO2=0 so they don't affect CF constraint,
-    # but their weights are still free — this is intentional since
-    # investment_set already ensures all firms have CO2 data.
     co2_arr = np.where(valid, co2_r, 0.0)
-    cap_arr = np.where(valid, cap_r, 1.0)  # 1.0 not 1e12: neutral, not artificially green
+    cap_arr = np.where(valid, cap_r, 1.0)
     n_invalid = int((~valid).sum())
     if n_invalid > 0:
         print(f"    ⚠ {n_invalid} firms with missing CO2/cap data (neutralized in CF constraint)")
@@ -56,14 +51,12 @@ def _vw_weights_year(invest_sets, mv_y, year):
     return caps / caps.sum()
 
 
-# ─────────────────────────────────────────────────────────────
-# PRE-COMPUTE ALL COVARIANCE MATRICES ONCE
-# ─────────────────────────────────────────────────────────────
+# Pre-compute covariance matrices (shared across all carbon-constrained portfolios)
 
 def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
     """
     Compute covariance matrices once for all years.
-    Uses 1/τ denominator — same as optimization.py, per consignes.
+    Uses 1/τ denominator (ddof=0), same as optimization.py.
     Returns {year → (Sigma_np, kept_isins)}
     """
     print("  Pre-computing covariance matrices...", end=" ", flush=True)
@@ -74,7 +67,6 @@ def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
         isins_Y    = invest_sets[Y]
         ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Same method as optimization.py — 1/τ (ddof=0) per consignes
         sigma_df = ret_window.T.cov(min_periods=36, ddof=0)
         valid    = sigma_df.notna().all(axis=1)
         sigma_df = sigma_df.loc[valid, valid]
@@ -88,9 +80,7 @@ def precompute_sigmas(invest_sets: dict, ret_windows: dict) -> dict:
     return sigmas
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.2 — MV with CF constraint  P_oos^(mv)(0.5)
-# ─────────────────────────────────────────────────────────────
+# Section 3.2 — MV with CF constraint: P_oos^(mv)(0.5)
 
 def run_mv_carbon(invest_sets, ret_windows, weights_mv,
                   co2, mv_y, sigmas, reduction=0.5):
@@ -123,7 +113,7 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
+            kept, co2[co2_col], mv_y[cap_col])
 
         # Warm start from MV weights
         w0 = weights_mv[Y].reindex(kept).fillna(0).values
@@ -156,9 +146,7 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
     return weights_mvc
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.3 — Tracking Error min with CF constraint
-# ─────────────────────────────────────────────────────────────
+# Section 3.3 — Tracking-error min with CF constraint
 
 def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
                   co2, mv_y, sigmas, reduction=0.5, label="vw"):
@@ -198,7 +186,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
+            kept, co2[co2_col], mv_y[cap_col])
 
         result = minimize(
             fun         = lambda w, S=Sigma, b=w_vw_arr: (w-b) @ S @ (w-b),
@@ -220,7 +208,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
 
         cf_ach = _cf_constraint_value(w, co2_arr, cap_arr)
 
-        # --- MINIMAL FIX: clamp numerical negatives before sqrt ---
+        # Clamp numerical negatives before sqrt
         quad = float((w - w_vw_arr) @ Sigma @ (w - w_vw_arr))
         te   = np.sqrt(max(quad, 0.0) * 12) * 100
 
@@ -231,19 +219,15 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
     return weights_te
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 4.1 — Net Zero  P_oos^(vw)(NZ)
-# ─────────────────────────────────────────────────────────────
+# Section 4.1 — Net Zero: P_oos^(vw)(NZ)
 
 def run_net_zero(invest_sets, ret_windows, mv_y_bench,
                  co2, mv_y, sigmas, theta=0.10, Y0=2013):
     """
     Tracking-error min with annually tightening CF constraint.
-    Per consignes (Section 4.1):
+    From the project statement (Section 4.1):
         CF_Y ≤ (1 - θ)^(Y - Y0 + 1) × CF_vw(Y0)
-    Note: exponent is (Y - Y0 + 1), NOT (Y - Y0).
-    For Y=2013: target = (0.9)^1 × CF_vw(2013)  → 10% reduction from year 1
-    For Y=2024: target = (0.9)^12 × CF_vw(2013) → ~71% cumulative reduction
+    Exponent is (Y - Y0 + 1), so Y=2013 already gets a 10% reduction.
     """
     print("=" * 60)
     print(f"NET ZERO PORTFOLIO  (θ={theta:.0%}/yr, base={Y0})")
@@ -287,7 +271,7 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
             w_vw = pd.Series(np.ones(n) / n, index=kept)
         w_vw_arr = w_vw.values
 
-        # ── FIXED: exponent = (Y - Y0 + 1) per consignes ──────
+        # Exponent = (Y - Y0 + 1) as in project statement
         cf_target = (1 - theta) ** (Y - Y0 + 1) * cf_vw_Y0
 
         co2_col = _get_dec(co2, Y)
@@ -297,7 +281,7 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
             continue
 
         co2_arr, cap_arr = _prepare_cf_arrays(
-            kept, co2[co2_col], mv_y[cap_col])  # MV already in million USD per consignes
+            kept, co2[co2_col], mv_y[cap_col])
 
         result = minimize(
             fun         = lambda w, S=Sigma, b=w_vw_arr: (w-b) @ S @ (w-b),
@@ -319,7 +303,7 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
 
         cf_ach = _cf_constraint_value(w, co2_arr, cap_arr)
 
-        # --- MINIMAL FIX: clamp numerical negatives before sqrt ---
+        # Clamp numerical negatives before sqrt
         quad = float((w - w_vw_arr) @ Sigma @ (w - w_vw_arr))
         te   = np.sqrt(max(quad, 0.0) * 12) * 100
 
@@ -327,5 +311,3 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
 
     print(f"  ✓ done for {len(weights_nz)} years.\n")
     return weights_nz
-
-

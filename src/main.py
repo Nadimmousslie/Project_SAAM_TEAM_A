@@ -1,4 +1,4 @@
-#### main.py — Entry point for Run:  python3 main.py ###
+# main.py — Entry point. Run: python3 main.py
 
 from data_loader        import load_all
 from data_cleaning      import clean_all
@@ -44,7 +44,7 @@ def main():
     print("  Parts I & II: MV + Carbon Constraints + Net Zero")
     print("█" * 60 + "\n")
 
-    # ── PART I ────────────────────────────────────────────────
+    # PART I
 
     data = load_all()
     data = clean_all(data)
@@ -53,7 +53,7 @@ def main():
     mv_ret, vw_ret = compute_all_returns(weights_mv, invest_sets, data)
     run_performance(mv_ret, vw_ret, data["rf"])
 
-    # ── PART II ───────────────────────────────────────────────
+    # PART II — Carbon emission reduction
 
     print("\n" + "█" * 60)
     print("  PART II — CARBON EMISSION REDUCTION")
@@ -106,7 +106,7 @@ def main():
         mv_ret, mvc_ret, vw_ret, tec_ret, data["rf"],
         metrics_mv, metrics_mvc, metrics_vw, metrics_tec)
 
-    # ── PART II — Section 4 ───────────────────────────────────
+    # PART II — Net zero objective
 
     print("\n" + "█" * 60)
     print("  PART II — NET ZERO OBJECTIVE")
@@ -125,7 +125,7 @@ def main():
         vw_ret, tec_ret, nz_ret, data["rf"],
         metrics_vw, metrics_tec, metrics_nz)
 
-    # Section 3.6 — All 5 portfolios comparison
+    # All 5 portfolios comparison
     compare_all_portfolios(
         mv_ret, mvc_ret, vw_ret, tec_ret, nz_ret, data["rf"])
 
@@ -136,5 +136,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
+    

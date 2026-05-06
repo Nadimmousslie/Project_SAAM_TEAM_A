@@ -1,12 +1,11 @@
-### carbon.py — Section 3.1: Carbon Intensity, WACI & CF ###
+# carbon.py — Carbon intensity, WACI & CF (Section 3.1)
 
 import numpy as np
 import pandas as pd
 from config import REBALANCE_YEARS, _SRC_DIR
 
-# ─────────────────────────────────────────────────────────────
-# 1. CARBON INTENSITY
-# ─────────────────────────────────────────────────────────────
+
+# 1. Carbon intensity
 
 def compute_carbon_intensity(co2: pd.DataFrame,
                               revenue: pd.DataFrame) -> pd.DataFrame:
@@ -28,9 +27,7 @@ def compute_carbon_intensity(co2: pd.DataFrame,
     return ci
 
 
-# ─────────────────────────────────────────────────────────────
-# 2. WEIGHTED-AVERAGE CARBON INTENSITY  (WACI)
-# ─────────────────────────────────────────────────────────────
+# 2. Weighted-average carbon intensity (WACI)
 
 def compute_waci(weights: pd.Series, ci: pd.DataFrame, year: int) -> float:
     """
@@ -52,7 +49,7 @@ def compute_waci(weights: pd.Series, ci: pd.DataFrame, year: int) -> float:
     w  = weights.reindex(common).fillna(0)
     c  = ci_year.reindex(common)
 
-    # Use original weights directly: WACI = Σ_i α_{i,Y} * CI_{i,Y} (per consignes)
+    # WACI = Σ_i α_{i,Y} * CI_{i,Y}
     # Firms with missing CI are excluded (NaN × weight = NaN → dropped by sum)
     valid = c.notna()
     w_valid = w[valid]
@@ -64,9 +61,7 @@ def compute_waci(weights: pd.Series, ci: pd.DataFrame, year: int) -> float:
     return float(w_valid @ c_valid)
 
 
-# ─────────────────────────────────────────────────────────────
-# 3. CARBON FOOTPRINT  (CF)
-# ─────────────────────────────────────────────────────────────
+# 3. Carbon footprint (CF)
 
 def compute_cf(weights: pd.Series,
                co2: pd.DataFrame,
@@ -85,9 +80,8 @@ def compute_cf(weights: pd.Series,
         CF_Y^(p) = Σ_i (α_{i,Y} / Cap_{i,Y}) * E_{i,Y}
 
     Units: tonnes CO2e per million USD invested.
-    Cap_{i,Y} is in millions USD (per consignes: "in million USD").
+    Cap_{i,Y} is in millions USD (Datastream convention).
     """
-    # Get December column for year Y
     def _get_dec(df):
         cols = pd.DatetimeIndex(df.columns)
         dec  = cols[(cols.year == year) & (cols.month == 12)]
@@ -99,7 +93,7 @@ def compute_cf(weights: pd.Series,
     if co2_year is None or cap_year is None:
         return np.nan
 
-    cap_year_m = cap_year  # Already in million USD per consignes
+    cap_year_m = cap_year  # already in million USD
 
     common = weights.index.intersection(co2_year.index).intersection(cap_year_m.index)
     w   = weights.reindex(common).fillna(0)
@@ -118,9 +112,7 @@ def compute_cf(weights: pd.Series,
     return float(cf)
 
 
-# ─────────────────────────────────────────────────────────────
-# 4. ROLLING WACI & CF  for a portfolio over all years
-# ─────────────────────────────────────────────────────────────
+# 4. Rolling WACI & CF over all rebalancing years
 
 def compute_portfolio_carbon_metrics(weights_dict: dict,
                                       ci: pd.DataFrame,
@@ -148,9 +140,7 @@ def compute_portfolio_carbon_metrics(weights_dict: dict,
     return df
 
 
-# ─────────────────────────────────────────────────────────────
-# 5. TOP-10 FIRMS DRIVING CARBON INTENSITY
-# ─────────────────────────────────────────────────────────────
+# 5. Top-N firms driving WACI
 
 def top_carbon_contributors(weights_dict: dict,
                              ci: pd.DataFrame,
@@ -189,7 +179,6 @@ def top_carbon_contributors(weights_dict: dict,
     if "NAME" in static.columns:
         result["Name"] = static["NAME"].reindex(contrib.index).values
     elif static.index.name == "ISIN":
-        # Try to get name from index
         result["Name"] = result["ISIN"]
 
     result = result[["ISIN", "Name", "Weight", "CI", "Contribution"]] \
@@ -198,9 +187,7 @@ def top_carbon_contributors(weights_dict: dict,
     return result
 
 
-# ─────────────────────────────────────────────────────────────
-# 6. PLOT WACI & CF EVOLUTION
-# ─────────────────────────────────────────────────────────────
+# 6. Plot WACI & CF evolution
 
 def plot_carbon_metrics(metrics_mv: pd.DataFrame,
                          metrics_vw: pd.DataFrame,
@@ -245,3 +232,4 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
         plt.savefig(path, dpi=150)
         print(f"  ✓ Carbon metrics plot saved → {path}")
     plt.close()
+    

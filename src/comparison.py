@@ -1,4 +1,4 @@
-### comparison.py — Sections 3.4 & 4.2: Portfolio Comparison ###
+# comparison.py — Portfolio comparison (Sections 3.4 & 4.2)
 
 import numpy as np
 import pandas as pd
@@ -8,10 +8,7 @@ from config import _SRC_DIR
 from performance import compute_stats
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.4 — Compare 4 portfolios
-# P_mv, P_mv(0.5), P_vw, P_vw(0.5)
-# ─────────────────────────────────────────────────────────────
+# Section 3.4 — Compare 4 portfolios: P_mv, P_mv(0.5), P_vw, P_vw(0.5)
 
 def compare_portfolios_34(mv_ret: pd.Series,
                            mvc_ret: pd.Series,
@@ -39,15 +36,15 @@ def compare_portfolios_34(mv_ret: pd.Series,
         "P_vw(0.5)": (tec_ret, "orangered",   "--", "TE carbon  $P^{vw}_{oos}(0.5)$"),
     }
 
-    # ── Stats table ───────────────────────────────────────────
+    # Stats table
     _print_comparison_table(portfolios, rf)
 
-    # ── Cumulative returns ────────────────────────────────────
+    # Cumulative returns
     _plot_cumulative(portfolios,
                      title="Cumulative Returns — (AMER, 2014–2025)",
                      filename="comparison_34_cumulative.png")
 
-    # ── Carbon metrics ────────────────────────────────────────
+    # Carbon metrics
     _plot_carbon_comparison(
         {
             "MV":       metrics_mv,
@@ -60,10 +57,7 @@ def compare_portfolios_34(mv_ret: pd.Series,
     )
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 4.2 — Compare 3 VW-based portfolios
-# P_vw, P_vw(0.5), P_vw(NZ)
-# ─────────────────────────────────────────────────────────────
+# Section 4.2 — Compare 3 VW-based portfolios: P_vw, P_vw(0.5), P_vw(NZ)
 
 def compare_portfolios_42(vw_ret: pd.Series,
                            tec_ret: pd.Series,
@@ -85,15 +79,15 @@ def compare_portfolios_42(vw_ret: pd.Series,
         "P_vw(NZ)": (nz_ret,  "green",      "-.",  "Net Zero  $P^{vw}_{oos}(NZ)$"),
     }
 
-    # ── Stats table ───────────────────────────────────────────
+    # Stats table
     _print_comparison_table(portfolios, rf)
 
-    # ── Cumulative returns ────────────────────────────────────
+    # Cumulative returns
     _plot_cumulative(portfolios,
                      title="Cumulative Returns VW, TE & Net ZERO — (AMER, 2014–2025)",
                      filename="comparison_42_cumulative.png")
 
-    # ── Carbon metrics ────────────────────────────────────────
+    # Carbon metrics
     _plot_carbon_comparison(
         {
             "VW":      metrics_vw,
@@ -105,9 +99,7 @@ def compare_portfolios_42(vw_ret: pd.Series,
     )
 
 
-# ─────────────────────────────────────────────────────────────
-# HELPERS
-# ─────────────────────────────────────────────────────────────
+# Helpers
 
 def _print_comparison_table(portfolios: dict, rf: pd.Series) -> None:
     metrics_def = [
@@ -195,10 +187,7 @@ def _plot_carbon_comparison(metrics_dict: dict,
     print(f"  ✓ Carbon comparison plot saved → {path}\n")
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.2 — Compare MV vs MV(0.5) only
-# Cumulative returns + CF only (no WACI)
-# ─────────────────────────────────────────────────────────────
+# Section 3.2 — Compare MV vs MV(0.5)
 
 def compare_mv_carbon_32(mv_ret: pd.Series,
                           mvc_ret: pd.Series,
@@ -245,10 +234,7 @@ def compare_mv_carbon_32(mv_ret: pd.Series,
     print(f"  ✓ CF plot saved → {path}\n")
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.3 — Compare VW vs VW(0.5) only
-# Cumulative returns + CF only (no WACI)
-# ─────────────────────────────────────────────────────────────
+# Section 3.3 — Compare VW vs VW(0.5)
 
 def compare_vw_carbon_33(vw_ret: pd.Series,
                           tec_ret: pd.Series,
@@ -295,10 +281,7 @@ def compare_vw_carbon_33(vw_ret: pd.Series,
     print(f"  ✓ CF plot saved → {path}\n")
 
 
-# ─────────────────────────────────────────────────────────────
-# SECTION 3.6 — Compare ALL 5 portfolios (cumulative only)
-# MV, MV(0.5), VW, VW(0.5), Net Zero
-# ─────────────────────────────────────────────────────────────
+# Extra — Compare all 5 portfolios (cumulative only)
 
 def compare_all_portfolios(mv_ret: pd.Series,
                             mvc_ret: pd.Series,
@@ -307,10 +290,10 @@ def compare_all_portfolios(mv_ret: pd.Series,
                             nz_ret: pd.Series,
                             rf: pd.Series) -> None:
     """
-    Section 3.6: Compare all 5 portfolios — stats table + cumulative returns.
+    Compare all 5 portfolios — stats table + cumulative returns.
     """
     print("=" * 70)
-    print("SECTION 3.6 — ALL PORTFOLIOS COMPARISON")
+    print("ALL PORTFOLIOS COMPARISON")
     print("=" * 70)
 
     portfolios = {
@@ -326,6 +309,5 @@ def compare_all_portfolios(mv_ret: pd.Series,
     _plot_cumulative(portfolios,
                      title="Cumulative Returns — All Portfolios (AMER, 2014–2025)",
                      filename="comparison_all_cumulative.png")
-
-
-
+    
+    

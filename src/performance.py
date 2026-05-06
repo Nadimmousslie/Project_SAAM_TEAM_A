@@ -1,4 +1,4 @@
-### performance.py — Performance Statistics, Plot & Monthly Table ###
+# performance.py — Performance statistics, plot & monthly table
 
 import numpy as np
 import pandas as pd
@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from config import OUTPUT_PLOT, _SRC_DIR
 
-# ─────────────────────────────────────────────────────────────
+
 # Summary statistics
-# ─────────────────────────────────────────────────────────────
 
 def compute_stats(ret: pd.Series, rf: pd.Series, label: str) -> dict:
     rf_aligned = rf.reindex(ret.index).fillna(0)
@@ -55,9 +54,7 @@ def print_stats_table(stats_mv: dict, stats_vw: dict) -> None:
     print("=" * (col_w * 3) + "\n")
 
 
-# ─────────────────────────────────────────────────────────────
 # Monthly returns table
-# ─────────────────────────────────────────────────────────────
 
 def build_monthly_table(mv_ret: pd.Series, vw_ret: pd.Series) -> pd.DataFrame:
     common = mv_ret.index.union(vw_ret.index)
@@ -85,9 +82,7 @@ def export_monthly_table(df: pd.DataFrame) -> None:
     print(f"  ✓ Monthly returns exported → {output_path}\n")
 
 
-# ─────────────────────────────────────────────────────────────
 # Cumulative return plot
-# ─────────────────────────────────────────────────────────────
 
 def plot_cumulative_returns(mv_ret: pd.Series,
                             vw_ret: pd.Series,
@@ -119,12 +114,8 @@ def plot_cumulative_returns(mv_ret: pd.Series,
     print(f"  ✓ Plot saved → {output_path}\n")
 
 
-# ─────────────────────────────────────────────────────────────
-# Convenience wrapper
-# ─────────────────────────────────────────────────────────────
-
 def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None:
-    """Compute stats, plot cumulative returns, export monthly table (no terminal print)."""
+    """Compute stats, plot cumulative returns, export monthly table."""
 
     print("=" * 55)
     print("PERFORMANCE ANALYSIS")
@@ -136,9 +127,8 @@ def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None
 
     plot_cumulative_returns(mv_ret, vw_ret)
 
-    # Export to Excel only — no terminal print (fast)
+    # Export to Excel
     monthly_df = build_monthly_table(mv_ret, vw_ret)
     export_monthly_table(monthly_df)
 
-
-
+    

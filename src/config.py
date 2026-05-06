@@ -1,4 +1,4 @@
-### config.py — Global parameters & file paths ###
+# config.py — Global parameters & file paths
 
 from pathlib import Path
 
@@ -34,4 +34,3 @@ MIN_MONTHS_DATA     = 36     # minimum valid monthly observations
 
 # OUTPUT PATHS
 OUTPUT_PLOT = str(_SRC_DIR.parent / "cumulative_returns.png")
-

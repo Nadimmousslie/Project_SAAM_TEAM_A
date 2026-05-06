@@ -1,4 +1,4 @@
-### portfolio_returns.py — Ex-post portfolio returns (MV & VW) ###
+# portfolio_returns.py — Ex-post portfolio returns (MV & VW)
 
 import pandas as pd
 import numpy as np
@@ -10,9 +10,8 @@ def _get_dec_col(df: pd.DataFrame, year: int):
     dec_cols = cols[(cols.year == year) & (cols.month == 12)]
     return dec_cols[-1] if len(dec_cols) > 0 else None
 
-# ─────────────────────────────────────────────────────────────
+
 # Min-Variance ex-post returns
-# ─────────────────────────────────────────────────────────────
 
 def compute_mv_returns(weights_dict: dict, returns_m: pd.DataFrame) -> pd.Series:
     """
@@ -57,9 +56,7 @@ def compute_mv_returns(weights_dict: dict, returns_m: pd.DataFrame) -> pd.Series
     return mv_series
 
 
-# ─────────────────────────────────────────────────────────────
-# Value-Weighted benchmark returns
-# ─────────────────────────────────────────────────────────────
+# Value-weighted benchmark returns
 
 def compute_vw_returns(invest_sets: dict,
                        returns_m: pd.DataFrame,
@@ -109,14 +106,9 @@ def compute_vw_returns(invest_sets: dict,
     return vw_series  # ← FIX: était "return mv_series, vw_series" par erreur
 
 
-# ─────────────────────────────────────────────────────────────
-# Convenience wrapper
-# ─────────────────────────────────────────────────────────────
-
 def compute_all_returns(weights_dict, invest_sets, data):
     """Convenience wrapper — returns (mv_series, vw_series)."""
     mv_series = compute_mv_returns(weights_dict, data["returns_m"])
     vw_series = compute_vw_returns(invest_sets, data["returns_m"], data["mv_m"])
     print("  ✓ Portfolio returns computed.\n")
     return mv_series, vw_series
-

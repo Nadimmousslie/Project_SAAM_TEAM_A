@@ -1,4 +1,4 @@
-### optimization.py — Section 2.2: Minimum-Variance Optimization ###
+# optimization.py — Minimum-variance optimization (Section 2.2)
 
 import numpy as np
 import pandas as pd
@@ -6,13 +6,9 @@ from scipy.optimize import minimize
 from config import REBALANCE_YEARS, MIN_MONTHS_DATA
 
 
-# ─────────────────────────────────────────────────────────────
-# COVARIANCE ESTIMATOR — 1/τ denominator (per consignes)
-# ─────────────────────────────────────────────────────────────
-
 def _covariance_matrix(ret: pd.DataFrame) -> pd.DataFrame:
     """
-    Sample covariance matrix with 1/τ denominator as per project consignes:
+    Sample covariance matrix with 1/τ denominator (as in the project statement):
         Σ_Y = (1/τ) Σ_{k=0}^{τ-1} (R_{t-k} - μ̂_Y)'(R_{t-k} - μ̂_Y)
     Assets with fewer than MIN_MONTHS_DATA valid observations are dropped.
     """
@@ -21,10 +17,6 @@ def _covariance_matrix(ret: pd.DataFrame) -> pd.DataFrame:
     sigma = sigma.loc[valid, valid]
     return sigma
 
-
-# ─────────────────────────────────────────────────────────────
-# OPTIMIZER
-# ─────────────────────────────────────────────────────────────
 
 def _min_variance_weights(cov: np.ndarray) -> np.ndarray:
     """
@@ -47,13 +39,9 @@ def _min_variance_weights(cov: np.ndarray) -> np.ndarray:
     return result.x if result.success else w0
 
 
-# ─────────────────────────────────────────────────────────────
-# ROLLING OPTIMIZATION
-# ─────────────────────────────────────────────────────────────
-
 def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
     """
-    For each year Y, estimate Σ_Y (1/τ per consignes) and solve the min-variance problem.
+    For each year Y, estimate Σ_Y (1/τ denominator) and solve the min-variance problem.
     Rebalances annually from 2013 to 2024.
 
     Returns
@@ -77,7 +65,7 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
 
         ret_window = ret_windows[Y].loc[isins_Y]
 
-        # Covariance matrix (1/τ per consignes)
+        # Covariance matrix (1/τ denominator)
         sigma_df = _covariance_matrix(ret_window)
         if sigma_df.shape[0] < 2:
             print(f"  {Y}: insufficient data — skipped.")

@@ -1,4 +1,4 @@
-### data_loader.py — Load & parse all Datastream Excel files ###
+# data_loader.py — Load & parse all Datastream Excel files
 
 import pandas as pd
 from config import PATHS, REGION
@@ -34,7 +34,7 @@ def _load_ds_wide(path, sheet, sheet_candidates=None):
             new_cols.append(c)
         else:
             try:
-                # integer year  → December 31 of that year
+                # integer year → December 31 of that year
                 year = int(float(str(c)))
                 new_cols.append(pd.Timestamp(f"{year}-12-31"))
             except Exception:
@@ -66,42 +66,42 @@ def load_all(region=REGION):
     print("LOADING DATA")
     print("=" * 55)
 
-    # ── Static file ───────────────────────────────────────────
+    # Static file
     static = pd.read_excel(PATHS["static"]).set_index("ISIN")
     amer_isins = static[static["Region"] == region].index.tolist()
     print(f"  Region '{region}' → {len(amer_isins)} firms")
 
-    # ── RI monthly ────────────────────────────────────────────
+    # RI monthly
     ri_m = _load_ds_wide(PATHS["ri_monthly"], sheet="RI")
     ri_m = ri_m[ri_m.index.isin(amer_isins)]
     ri_m = ri_m.apply(pd.to_numeric, errors="coerce")
     print(f"  RI monthly  : {ri_m.shape[0]} firms × {ri_m.shape[1]} months")
 
-    # ── RI yearly ─────────────────────────────────────────────
+    # RI yearly
     ri_y = _load_ds_wide(PATHS["ri_yearly"], sheet="RI")
     ri_y = ri_y[ri_y.index.isin(amer_isins)]
     ri_y = ri_y.apply(pd.to_numeric, errors="coerce")
     print(f"  RI yearly   : {ri_y.shape[0]} firms × {ri_y.shape[1]} years")
 
-    # ── Market-cap monthly ────────────────────────────────────
+    # Market-cap monthly
     mv_m = _load_ds_wide(PATHS["mv_monthly"], sheet="MV")
     mv_m = mv_m[mv_m.index.isin(amer_isins)]
     mv_m = mv_m.apply(pd.to_numeric, errors="coerce")
     print(f"  MV monthly  : {mv_m.shape[0]} firms × {mv_m.shape[1]} months")
 
-    # ── Market-cap yearly ─────────────────────────────────────
+    # Market-cap yearly
     mv_y = _load_ds_wide(PATHS["mv_yearly"], sheet="MV")
     mv_y = mv_y[mv_y.index.isin(amer_isins)]
     mv_y = mv_y.apply(pd.to_numeric, errors="coerce")
     print(f"  MV yearly   : {mv_y.shape[0]} firms × {mv_y.shape[1]} years")
 
-    # ── CO2 ───────────────────────────────────────────────────
+    # CO2 Scope 1
     co2 = _load_ds_wide(PATHS["co2"], sheet="Scope1", sheet_candidates=["SCOPE1"])
     co2 = co2[co2.index.isin(amer_isins)]
     co2 = co2.apply(pd.to_numeric, errors="coerce")
     print(f"  CO2 Scope-1 : {co2.shape[0]} firms × {co2.shape[1]} years")
 
-    # ── Revenue ───────────────────────────────────────────────
+    # Revenue
     revenue = _load_ds_wide(
         PATHS["revenue"],
         sheet="Revenue",
@@ -111,7 +111,7 @@ def load_all(region=REGION):
     revenue = revenue.apply(pd.to_numeric, errors="coerce")
     print(f"  Revenue     : {revenue.shape[0]} firms × {revenue.shape[1]} years")
 
-    # ── Risk-free rate ────────────────────────────────────────
+    # Risk-free rate
     rf_raw = pd.read_excel(PATHS["risk_free"])
     rf_raw.columns = ["date", "RF"]
     rf_raw["date"] = pd.to_datetime(rf_raw["date"].astype(str), format="%Y%m")
@@ -132,4 +132,3 @@ def load_all(region=REGION):
         "static"    : static,
         "amer_isins": amer_isins,
     }
-
