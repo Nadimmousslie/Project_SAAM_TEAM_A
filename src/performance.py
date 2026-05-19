@@ -79,7 +79,7 @@ def export_monthly_table(df: pd.DataFrame) -> None:
             max_len = max(len(str(cell.value)) for cell in col if cell.value)
             ws.column_dimensions[col[0].column_letter].width = max_len + 4
 
-    print(f"  ✓ Monthly returns exported → {output_path}\n")
+    print(f"  Monthly returns exported → {output_path}\n")
 
 
 # Cumulative return plot
@@ -111,7 +111,7 @@ def plot_cumulative_returns(mv_ret: pd.Series,
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
     plt.close()
-    print(f"  ✓ Plot saved → {output_path}\n")
+    print(f"  Plot saved → {output_path}\n")
 
 
 def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None:
@@ -131,4 +131,5 @@ def run_performance(mv_ret: pd.Series, vw_ret: pd.Series, rf: pd.Series) -> None
     monthly_df = build_monthly_table(mv_ret, vw_ret)
     export_monthly_table(monthly_df)
 
+    
     

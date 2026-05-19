@@ -147,7 +147,7 @@ def _plot_cumulative(portfolios: dict, title: str, filename: str) -> None:
     path = str(_SRC_DIR.parent / filename)
     plt.savefig(path, dpi=150)
     plt.close()
-    print(f"  ✓ Plot saved → {path}")
+    print(f"  Plot saved → {path}")
 
 
 def _plot_carbon_comparison(metrics_dict: dict,
@@ -184,7 +184,7 @@ def _plot_carbon_comparison(metrics_dict: dict,
     path = str(_SRC_DIR.parent / filename)
     plt.savefig(path, dpi=150)
     plt.close()
-    print(f"  ✓ Carbon comparison plot saved → {path}\n")
+    print(f"  Carbon comparison plot saved → {path}\n")
 
 
 # Section 3.2 — Compare MV vs MV(0.5)
@@ -231,7 +231,7 @@ def compare_mv_carbon_32(mv_ret: pd.Series,
     path = str(_SRC_DIR.parent / "comparison_32_carbon.png")
     plt.savefig(path, dpi=150)
     plt.close()
-    print(f"  ✓ CF plot saved → {path}\n")
+    print(f"  CF plot saved → {path}\n")
 
 
 # Section 3.3 — Compare VW vs VW(0.5)
@@ -278,7 +278,7 @@ def compare_vw_carbon_33(vw_ret: pd.Series,
     path = str(_SRC_DIR.parent / "comparison_33_carbon.png")
     plt.savefig(path, dpi=150)
     plt.close()
-    print(f"  ✓ CF plot saved → {path}\n")
+    print(f"  CF plot saved → {path}\n")
 
 
 # Extra — Compare all 5 portfolios (cumulative only)
@@ -288,9 +288,14 @@ def compare_all_portfolios(mv_ret: pd.Series,
                             vw_ret: pd.Series,
                             tec_ret: pd.Series,
                             nz_ret: pd.Series,
-                            rf: pd.Series) -> None:
+                            rf: pd.Series,
+                            metrics_mv: pd.DataFrame = None,
+                            metrics_mvc: pd.DataFrame = None,
+                            metrics_vw: pd.DataFrame = None,
+                            metrics_tec: pd.DataFrame = None,
+                            metrics_nz: pd.DataFrame = None) -> None:
     """
-    Compare all 5 portfolios — stats table + cumulative returns.
+    Compare all 5 portfolios — stats table + cumulative returns + WACI & CF.
     """
     print("=" * 70)
     print("ALL PORTFOLIOS COMPARISON")
@@ -309,5 +314,20 @@ def compare_all_portfolios(mv_ret: pd.Series,
     _plot_cumulative(portfolios,
                      title="Cumulative Returns — All Portfolios (AMER, 2014–2025)",
                      filename="comparison_all_cumulative.png")
+
+    if metrics_mv is not None:
+        _plot_carbon_comparison(
+            {
+                "MV":       metrics_mv,
+                "MV(0.5)":  metrics_mvc,
+                "VW":       metrics_vw,
+                "VW(0.5)":  metrics_tec,
+                "VW(NZ)":   metrics_nz,
+            },
+            title="Carbon Metrics — All Portfolios (WACI & CF)",
+            filename="comparison_all_carbon.png",
+        )
+    
+    
     
     

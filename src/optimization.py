@@ -35,7 +35,7 @@ def _min_variance_weights(cov: np.ndarray) -> np.ndarray:
         options     = {"ftol": 1e-9, "maxiter": 500},
     )
     if not result.success:
-        print(f"    ⚠ WARNING: MV solver did not converge — {result.message}")
+        print(f"    WARNING: MV solver did not converge — {result.message}")
     return result.x if result.success else w0
 
 
@@ -83,5 +83,5 @@ def run_optimization(invest_sets: dict, ret_windows: dict) -> dict:
               f"port. variance = {port_var:.6f} | "
               f"ann. vol = {np.sqrt(port_var * 12) * 100:.2f}%")
 
-    print(f"  ✓ Optimization done for {len(weights_dict)} years.\n")
+    print(f"  Optimization done for {len(weights_dict)} years.\n")
     return weights_dict

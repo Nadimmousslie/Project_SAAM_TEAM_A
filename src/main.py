@@ -39,10 +39,10 @@ def _build_vw_weights(invest_sets, mv_y):
 
 
 def main():
-    print("\n" + "█" * 60)
+    print("\n" + "=" * 60)
     print("  MINIMUM-VARIANCE PORTFOLIO — AMER REGION")
     print("  Parts I & II: MV + Carbon Constraints + Net Zero")
-    print("█" * 60 + "\n")
+    print("=" * 60 + "\n")
 
     # PART I
 
@@ -55,9 +55,9 @@ def main():
 
     # PART II — Carbon emission reduction
 
-    print("\n" + "█" * 60)
+    print("\n" + "=" * 60)
     print("  PART II — CARBON EMISSION REDUCTION")
-    print("█" * 60 + "\n")
+    print("=" * 60 + "\n")
 
     # Pre-compute covariance matrices ONCE (shared by 3.2, 3.3, 4.1)
     print("Pre-computing shared resources...")
@@ -108,9 +108,9 @@ def main():
 
     # PART II — Net zero objective
 
-    print("\n" + "█" * 60)
+    print("\n" + "=" * 60)
     print("  PART II — NET ZERO OBJECTIVE")
-    print("█" * 60 + "\n")
+    print("=" * 60 + "\n")
 
     # Section 4.1 — Net zero
     weights_nz = run_net_zero(
@@ -127,13 +127,16 @@ def main():
 
     # All 5 portfolios comparison
     compare_all_portfolios(
-        mv_ret, mvc_ret, vw_ret, tec_ret, nz_ret, data["rf"])
+        mv_ret, mvc_ret, vw_ret, tec_ret, nz_ret, data["rf"],
+        metrics_mv, metrics_mvc, metrics_vw, metrics_tec, metrics_nz)
 
-    print("\n" + "█" * 60)
+    print("\n" + "=" * 60)
     print("  ALL DONE")
-    print("█" * 60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":
     main()
+    
+    
     

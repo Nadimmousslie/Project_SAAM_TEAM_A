@@ -35,7 +35,7 @@ def _prepare_cf_arrays(kept, co2_series, cap_series_m):
     cap_arr = np.where(valid, cap_r, 1.0)
     n_invalid = int((~valid).sum())
     if n_invalid > 0:
-        print(f"    ⚠ {n_invalid} firms with missing CO2/cap data (neutralized in CF constraint)")
+        print(f"    {n_invalid} firms with missing CO2/cap data (neutralized in CF constraint)")
     return co2_arr, cap_arr
 
 
@@ -133,7 +133,7 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
         )
 
         if not result.success:
-            print(f"    ⚠ WARNING [{Y}]: MV-carbon solver did not converge — {result.message}")
+            print(f"    WARNING [{Y}]: MV-carbon solver did not converge — {result.message}")
         w = result.x if result.success else w0
         weights_mvc[Y] = pd.Series(w, index=kept)
 
@@ -142,7 +142,7 @@ def run_mv_carbon(invest_sets, ret_windows, weights_mv,
         print(f"  {Y}: {n:>4} firms | CF_mv={cf_mv:.1f} | "
               f"target={cf_target:.1f} | achieved={cf_ach:.1f} | vol={vol:.2f}%")
 
-    print(f"  ✓ done for {len(weights_mvc)} years.\n")
+    print(f"  done for {len(weights_mvc)} years.\n")
     return weights_mvc
 
 
@@ -202,7 +202,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
         )
 
         if not result.success:
-            print(f"    ⚠ WARNING [{Y}]: TE-carbon solver did not converge — {result.message}")
+            print(f"    WARNING [{Y}]: TE-carbon solver did not converge — {result.message}")
         w = result.x if result.success else w_vw_arr
         weights_te[Y] = pd.Series(w, index=kept)
 
@@ -215,7 +215,7 @@ def run_te_carbon(invest_sets, ret_windows, mv_y_bench,
         print(f"  {Y}: CF_vw={cf_vw:.1f} | target={cf_target:.1f} | "
               f"achieved={cf_ach:.1f} | TE={te:.4f}%")
 
-    print(f"  ✓ done for {len(weights_te)} years.\n")
+    print(f"  done for {len(weights_te)} years.\n")
     return weights_te
 
 
@@ -297,7 +297,7 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
         )
 
         if not result.success:
-            print(f"    ⚠ WARNING [{Y}]: Net-Zero solver did not converge — {result.message}")
+            print(f"    WARNING [{Y}]: Net-Zero solver did not converge — {result.message}")
         w = result.x if result.success else w_vw_arr
         weights_nz[Y] = pd.Series(w, index=kept)
 
@@ -309,5 +309,6 @@ def run_net_zero(invest_sets, ret_windows, mv_y_bench,
 
         print(f"  {Y}: target={cf_target:.4f} | achieved={cf_ach:.4f} | TE={te:.4f}%")
 
-    print(f"  ✓ done for {len(weights_nz)} years.\n")
+    print(f"  done for {len(weights_nz)} years.\n")
     return weights_nz
+

@@ -91,5 +91,5 @@ def build_investment_sets(data: dict) -> dict:
         print(f"  {Y}: {len(isins_Y):>4} eligible firms "
               f"(window: {window_cols[0].date()} → {window_cols[-1].date()})")
 
-    print(f"  ✓ Investment sets built for {len(invest_sets)} years.\n")
+    print(f"  Investment sets built for {len(invest_sets)} years.\n")
     return invest_sets, ret_windows

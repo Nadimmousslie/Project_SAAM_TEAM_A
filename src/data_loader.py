@@ -119,7 +119,7 @@ def load_all(region=REGION):
     rf = rf_raw.set_index("date")["RF"] / 100   # % → decimal
     print(f"  Risk-free   : {rf.index[0].date()} → {rf.index[-1].date()}")
 
-    print("  ✓ All files loaded.\n")
+    print("  All files loaded.\n")
 
     return {
         "ri_m"      : ri_m,

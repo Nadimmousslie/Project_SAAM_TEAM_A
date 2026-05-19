@@ -44,7 +44,7 @@ def clean_all(data: dict) -> dict:
 
     print(f"  Final RI monthly : {ri_m.shape[0]} firms × {ri_m.shape[1]} months")
     print(f"  Final returns_m  : {returns_m.shape[0]} firms × {returns_m.shape[1]} months")
-    print("  ✓ Cleaning done.\n")
+    print("  Cleaning done.\n")
 
     data["ri_m"] = ri_m
     data["ri_y"] = ri_y

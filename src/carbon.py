@@ -230,6 +230,7 @@ def plot_carbon_metrics(metrics_mv: pd.DataFrame,
     if output_dir:
         path = str(output_dir / "carbon_metrics.png")
         plt.savefig(path, dpi=150)
-        print(f"  ✓ Carbon metrics plot saved → {path}")
+        print(f"  Carbon metrics plot saved → {path}")
     plt.close()
+    
     
