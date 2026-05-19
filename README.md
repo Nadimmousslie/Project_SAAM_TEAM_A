@@ -1,12 +1,12 @@
 # Sustainability-Aware Asset Management
 ## Minimum-Variance Portfolio with Carbon Emission Reduction — AMER Region
 
-> **Course:** Sustainability Aware Asset Management — MScF Finance, HEC Lausanne<br>
-> **Professor:** Eric Jondeau<br>
-> **Region:** Americas (AMER)<br>
-> **Scope:** SCOPE 1<br>
-> **Period:** Out-of-sample 2014–2025 (estimation window 2004–2013, rolling)<br>
-> **Group:** GROUP A - Nadim MOUSSLIE - Leonard PERIGAULT - Mattia COMISETI - Matteo GIRAUD
+> **Course:** Sustainability Aware Asset Management — MScF Finance, HEC Lausanne  
+> **Professor:** Eric Jondeau  
+> **Region:** Americas (**AMER**)  
+> **Scope:** **Scope 1**  
+> **Period:** Out-of-sample **2014–2025** (estimation window **2004–2013**, rolling)  
+> **Group:** **Group A** — Nadim MOUSSLIE, Leonard PERIGAULT, Mattia COMISETI, Matteo GIRAUD
 
 ---
 
@@ -19,12 +19,12 @@ PROJECT_SAAM_TEAM_A/
 │   └── raw/                          # Datastream Excel files (not versioned)
 │       ├── DS_RI_T_USD_M_2025.xlsx   # Total Return Index — monthly
 │       ├── DS_RI_T_USD_Y_2025.xlsx   # Total Return Index — yearly
-│       ├── DS_MV_T_USD_M_2025.xlsx   # Market Capitalization — monthly
-│       ├── DS_MV_T_USD_Y_2025.xlsx   # Market Capitalization — yearly
+│       ├── DS_MV_T_USD_M_2025.xlsx   # Market Value / Market Cap — monthly
+│       ├── DS_MV_T_USD_Y_2025.xlsx   # Market Value / Market Cap — yearly
 │       ├── DS_CO2_SCOPE_1_Y_2025.xlsx# CO2 Scope 1 emissions — yearly
 │       ├── DS_REV_Y_2025.xlsx        # Revenue — yearly
 │       ├── Static_2025.xlsx          # ISIN, Name, Country, Region
-│       └── Risk_Free_Rate_2025.xlsx  # Monthly risk-free rate (Fama-French)
+│       └── Risk_Free_Rate_2025.xlsx  # Monthly risk-free rate (Fama–French)
 │
 ├── src/                              # Source code
 │   ├── main.py                       # Entry point — runs the full pipeline
@@ -33,7 +33,7 @@ PROJECT_SAAM_TEAM_A/
 │   ├── data_cleaning.py              # Data cleaning (Section 1)
 │   ├── investment_set.py             # Investment set construction (Section 2.1)
 │   ├── optimization.py               # Min-variance optimization (Section 2.2)
-│   ├── portfolio_returns.py          # Ex-post MV & VW returns (Section 2.2-2.3)
+│   ├── portfolio_returns.py          # Ex-post MV & VW returns (Section 2.2–2.3)
 │   ├── performance.py                # Stats, plots & Excel export (Section 2.3)
 │   ├── carbon.py                     # Carbon intensity, WACI, CF (Section 3.1)
 │   ├── carbon_portfolio.py           # Carbon-constrained portfolios (3.2, 3.3, 4.1)
@@ -48,23 +48,29 @@ PROJECT_SAAM_TEAM_A/
 
 ## Installation
 
-**1. Clone the repository and create a virtual environment:**
+**1) Clone the repository and create a virtual environment**
 ```bash
 git clone <repo-url>
 cd PROJECT_SAAM_TEAM_A
 python3 -m venv venv
 source venv/bin/activate        # macOS/Linux
-venv\Scripts\activate           # Windows
+venv\Scripts\activate         # Windows
 ```
 
-**2. Install dependencies:**
+**2) Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-**3. Place the Datastream Excel files** in `data/raw/` (see structure above).
+**3) Place the Datastream Excel files** in `data/raw/` (see structure above).
 
-**4. Run the project:**
+**4) Run the project (recommended)**
+Run from the project root so imports work reliably:
+```bash
+python3 -m src.main
+```
+
+Alternative (if you prefer running inside `src/`):
 ```bash
 cd src
 python3 main.py
@@ -108,19 +114,19 @@ load_all()
 
 | Step | Rule |
 |---|---|
-| Missing prices | Drop ISINs with all NaN prices (no Datastream match) |
-| Low prices | RI < 0.5 → treated as NaN (avoids infinite returns) |
-| Internal gaps | Forward-fill only between two valid observations |
-| Delistings | First NaN after a valid price → return of −100% |
-| CO2 / Revenue | Forward-fill last available annual observation |
+| Missing prices | Drop ISINs with all-NaN prices (no Datastream match) **from all tables** |
+| Low prices | RI < 0.5 → treated as NaN (avoids extreme / infinite returns) |
+| Internal gaps | Forward-fill **only** “in-between” gaps (not end-of-sample delistings) |
+| Delistings | Default/delisting → realized return of **−100%** at delisting time |
+| CO2 / Revenue | Annual gaps → forward-fill last available observation (no look-ahead) |
 
 ### Section 2.1 — Investment Set (`investment_set.py`)
 
-Each year Y, a firm is eligible if:
-1. It belongs to the **AMER** region
-2. **CO2 Scope 1** data is available at end of year Y
-3. **RI price** is not missing at end of year Y
-4. At least **36 months** of valid returns in the 10-year window
+Each year **Y**, a firm is eligible (to invest in **Y+1**) if:
+1. It belongs to the **AMER** region (from `Static_2025.xlsx`)
+2. **CO2 Scope 1** data is available at the end of year **Y**
+3. **RI price** is not missing at the end of year **Y**
+4. At least **36 months** of valid returns in the 10-year window (τ = 120 months)
 5. **Not stale** — proportion of zero monthly returns ≤ 50%
 
 ### Section 2.2 — Optimization (`optimization.py`)
@@ -133,17 +139,17 @@ s.t.  Σ w = 1
       w_i ≥ 0   for all i
 ```
 
-- Estimation window: **10 years** (120 months) ending at December of year Y
-- Rebalanced annually from **2013 to 2024**
-- Covariance matrix estimated with `min_periods=36`
+- Estimation window: **10 years** (120 months) ending at December of year **Y**
+- Rebalanced annually from **2013 to 2024** (weights decided at end of Y, applied to Y+1)
 - Covariance uses **1/τ denominator** (`ddof=0`) as per project specifications
 
 ### Section 2.3 — Benchmark (`portfolio_returns.py`, `performance.py`)
 
-Value-weighted benchmark **P^(vw)** uses monthly market cap weights:
+Value-weighted benchmark **P^(vw)** uses market-cap weights at **end of month t**:
 
 ```
 w_{i,t} = Cap_{i,t} / Σ_j Cap_{j,t}
+R^{vw}_{t+1} = Σ_i w_{i,t} R_{i,t+1}
 ```
 
 **Performance metrics:** annualised return (µ), volatility (σ), Sharpe ratio, min, max.
@@ -154,11 +160,11 @@ w_{i,t} = Cap_{i,t} / Σ_j Cap_{j,t}
 
 ### Section 3.1 — Carbon Metrics (`carbon.py`)
 
-**Carbon Intensity:**
+**Carbon Intensity (CI):**
 ```
 CI_{i,Y} = CO2_{i,Y} / (Rev_{i,Y} / 1000)    [tonnes CO2e / M USD revenue]
 ```
-> Note: Revenue is in thousands USD in Datastream → divide by 1000 to get millions.
+> Revenue is in thousands USD in Datastream → divide by 1000 to get millions.
 
 **Weighted-Average Carbon Intensity (WACI):**
 ```
@@ -182,7 +188,7 @@ s.t.  CF(w) ≤ 0.5 × CF(P^(mv))
 
 ### Section 3.3 — Tracking Error with Carbon Constraint (`carbon_portfolio.py`)
 
-Portfolio **P^(vw)(0.5)** — passive investor minimizing tracking error vs VW:
+Portfolio **P^(vw)(0.5)** — minimize tracking error vs VW with CF ≤ 50% of VW baseline:
 
 ```
 min   (w - w_vw)' Σ_Y (w - w_vw)
@@ -210,17 +216,17 @@ Compares 3 portfolios: **P^(vw)**, **P^(vw)(0.5)**, **P^(vw)(NZ)**
 
 ## Outputs
 
-After running `main.py`, the following files are generated in the project root:
+After running `main.py`, files are generated in `outputs/` (and/or the project root depending on configuration):
 
 | File | Description |
 |---|---|
 | `cumulative_returns.png` | Part I — MV vs VW cumulative returns |
 | `monthly_portfolio_returns.xlsx` | Part I — Monthly returns table |
 | `carbon_metrics.png` | WACI & CF evolution (MV vs VW) |
-| `comparison_34_cumulative.png` | Section 3.4 — 4 portfolio comparison |
+| `comparison_34_cumulative.png` | Section 3.4 — 4-portfolio comparison |
 | `comparison_34_carbon.png` | Section 3.4 — Carbon metrics comparison |
-| `comparison_42_cumulative.png` | Section 4.2 — Net zero comparison |
-| `comparison_42_carbon.png` | Section 4.2 — Net zero carbon path |
+| `comparison_42_cumulative.png` | Section 4.2 — Net Zero comparison |
+| `comparison_42_carbon.png` | Section 4.2 — Net Zero carbon path |
 
 ---
 
@@ -242,6 +248,6 @@ After running `main.py`, the following files are generated in the project root:
 
 - All portfolios are **long-only** (no short sales) to facilitate carbon footprint interpretation.
 - The project uses **Scope 1** CO2 emissions as assigned to the group.
-- Out-of-sample period: **January 2014 → December 2025** (144 months).
-- The risk-free rate comes from the **Fama-French** data library (monthly, in %).
+- Out-of-sample period: **January 2014 → December 2025** (**144** months).
+- The risk-free rate comes from the **Fama–French** library (monthly, in %).
 
