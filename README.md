@@ -38,7 +38,7 @@ PROJECT_SAAM_TEAM_A/
 │   ├── carbon.py                     # Carbon intensity, WACI, CF (Section 3.1)
 │   ├── carbon_portfolio.py           # Carbon-constrained portfolios (3.2, 3.3, 4.1)
 │   ├── comparison.py                 # Portfolio comparisons (3.4, 4.2)    
-│   └──SAAM_Project_Notebook_Team_A.ipynb
+│   └── SAAM_Project_Notebook_Team_A.ipynb
 │   
 │
 ├── outputs/                          # Generated files (plots, Excel)
