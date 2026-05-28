@@ -103,7 +103,7 @@ def compute_vw_returns(invest_sets: dict,
     vw_series = pd.Series(vw_returns).sort_index()
     print(f"  VW : {len(vw_series)} months  "
           f"({vw_series.index[0].date()} → {vw_series.index[-1].date()})")
-    return vw_series  # ← FIX: était "return mv_series, vw_series" par erreur
+    return vw_series 
 
 
 def compute_all_returns(weights_dict, invest_sets, data):
