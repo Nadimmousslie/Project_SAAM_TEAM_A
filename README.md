@@ -223,10 +223,17 @@ After running `main.py`, files are generated in `outputs/` (and/or the project r
 | `cumulative_returns.png` | Part I — MV vs VW cumulative returns |
 | `monthly_portfolio_returns.xlsx` | Part I — Monthly returns table |
 | `carbon_metrics.png` | WACI & CF evolution (MV vs VW) |
+| `comparison_32_cumulative.png` | Section 3.2 — MV vs MV(0.5) cumulative returns |
+| `comparison_32_carbon.png` | Section 3.2 — MV vs MV(0.5) carbon footprint comparison |
+| `comparison_33_cumulative.png` | Section 3.3 — VW vs VW(0.5) cumulative returns |
+| `comparison_33_carbon.png` | Section 3.3 — VW vs VW(0.5) carbon footprint comparison |
 | `comparison_34_cumulative.png` | Section 3.4 — 4-portfolio comparison |
 | `comparison_34_carbon.png` | Section 3.4 — Carbon metrics comparison |
 | `comparison_42_cumulative.png` | Section 4.2 — Net Zero comparison |
 | `comparison_42_carbon.png` | Section 4.2 — Net Zero carbon path |
+| `comparison_all_cumulative.png` | Final comparison — all portfolios cumulative returns |
+| `comparison_all_carbon.png` | Final comparison — all portfolios carbon metrics |
+
 
 ---
 
